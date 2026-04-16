@@ -19,4 +19,16 @@ async function sendMessage(chatId, text) {
     }
 }
 
-module.exports = { sendMessage };
+function startTyping(chatId) {
+    const token = process.env.TELEGRAM_TOKEN;
+    const send = () => axios.post(`https://api.telegram.org/bot${token}/sendChatAction`, {
+        chat_id: chatId,
+        action: 'typing'
+    }).catch(() => {});
+
+    send();
+    const interval = setInterval(send, 4000);
+    return () => clearInterval(interval);
+}
+
+module.exports = { sendMessage, startTyping };

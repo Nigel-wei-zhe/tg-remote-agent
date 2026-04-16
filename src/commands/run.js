@@ -1,6 +1,6 @@
 const { exec } = require('child_process');
 const chalk = require('chalk');
-const { sendMessage } = require('../utils/telegram');
+const { sendMessage, startTyping } = require('../utils/telegram');
 const { logError } = require('../utils/logger');
 
 const timestamp = () => chalk.gray(`[${new Date().toLocaleTimeString()}]`);
@@ -9,7 +9,9 @@ function handle(chatId, text, sender) {
     const command = text.replace('/run ', '');
     console.log(`${timestamp()} ${chalk.bgYellow.black(' RUN ')} ${chalk.yellow(command)} ${chalk.dim(`@${sender}`)}`);
 
+    const stopTyping = startTyping(chatId);
     exec(command, { timeout: 30000 }, (error, stdout, stderr) => {
+        stopTyping();
         let output = stdout || stderr || '（無輸出）';
         if (error) {
             const isTimeout = error.killed && error.signal === 'SIGTERM';
