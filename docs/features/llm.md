@@ -16,6 +16,7 @@ src/commands/
 ## API 規格 (MiniMax)
 - Endpoint: `POST https://api.minimax.io/v1/text/chatcompletion_v2`
 - Auth: `Bearer {MINIMAX_API_KEY}`
+- Request timeout: 30 秒
 - 預設模型: `MiniMax-M2.7`
 
 ## 環境變數

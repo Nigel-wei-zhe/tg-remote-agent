@@ -9,12 +9,14 @@ function handle(chatId, text, sender) {
     const command = text.replace('/run ', '');
     console.log(`${timestamp()} ${chalk.bgYellow.black(' RUN ')} ${chalk.yellow(command)} ${chalk.dim(`@${sender}`)}`);
 
-    exec(command, (error, stdout, stderr) => {
+    exec(command, { timeout: 30000 }, (error, stdout, stderr) => {
         let output = stdout || stderr || '（無輸出）';
         if (error) {
-            console.log(`${timestamp()} ${chalk.bgRed.white(' ERR ')} ${chalk.red(error.message.split('\n')[0])}`);
-            logError(`RUN:${command}`, error.message);
-            output = `執行出錯:\n${error.message}`;
+            const isTimeout = error.killed && error.signal === 'SIGTERM';
+            const errMsg = isTimeout ? `指令逾時（超過 30 秒）：${command}` : error.message;
+            console.log(`${timestamp()} ${chalk.bgRed.white(' ERR ')} ${chalk.red(errMsg.split('\n')[0])}`);
+            logError(`RUN:${command}`, errMsg);
+            output = `執行出錯:\n${errMsg}`;
         } else {
             console.log(`${timestamp()} ${chalk.bgGreen.black(' OK  ')} ${chalk.dim(output.split('\n')[0].slice(0, 60))}`);
         }

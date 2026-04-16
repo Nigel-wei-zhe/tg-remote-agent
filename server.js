@@ -42,9 +42,10 @@ async function pollUpdates() {
             params: { offset: lastUpdateId + 1, timeout: 30 }
         });
 
-        for (const update of response.data.result) {
-            lastUpdateId = update.update_id;
-            await handleUpdate(update);
+        const updates = response.data.result;
+        if (updates.length > 0) {
+            lastUpdateId = updates[updates.length - 1].update_id;
+            updates.forEach(update => handleUpdate(update));
         }
     } catch (err) {
         const reason = err.response ? err.response.data.description : err.message;
