@@ -8,6 +8,7 @@
 - API: axios
 - Env: dotenv
 - UI: chalk, cli-box
+- LLM: MiniMax API (chatcompletion_v2)
 
 ## 功能細節 (L2 - 節約 Token 請只讀取感興趣的檔案)
 - [遠端指令執行](./features/remote-exec.md)
@@ -15,8 +16,12 @@
 - [部署與啟動方式](./features/deployment.md)
 - [終端機介面美化](./features/ui.md)
 - [錯誤日誌](./features/log.md)
+- [LLM 整合 (MiniMax)](./features/llm.md)
 
 ## 檔案結構
 - server.js: Polling 核心邏輯與 bin 入口。
+- src/commands/: 指令處理（run, ask）。
+- src/llm/: LLM 抽象層與 providers。
+- src/utils/: 共用工具（logger, telegram）。
 - package.json: 依賴與 holeOpen 全域命令。
 - log/: 依日期分檔的錯誤日誌。
