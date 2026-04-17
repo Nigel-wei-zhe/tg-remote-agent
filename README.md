@@ -1,4 +1,4 @@
-# LazyHole
+# LazyHole-Agent (極簡懶人代理)
 
 極簡、無記憶、隨插即用的 Telegram AI Agent。
 

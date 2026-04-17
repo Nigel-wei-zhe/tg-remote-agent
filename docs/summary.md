@@ -1,4 +1,4 @@
-# LazyHole 專案摘要 (L1)
+# LazyHole-Agent 專案摘要 (L1)
 
 ## 專案大綱
 極簡化遠端 Telegram AI Agent。無長期記憶、無自我學習，專注於高效的指令執行與網頁研究任務。

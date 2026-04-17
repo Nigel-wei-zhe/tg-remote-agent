@@ -1,5 +1,5 @@
 {
-  "name": "lazyhole",
+  "name": "lazyhole-agent",
   "version": "1.0.0",
   "description": "A minimalist, zero-memory Telegram AI Agent for lazy server management.",
   "main": "server.js",
@@ -8,12 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Nigel-wei-zhe/lazyhole.git"
+    "url": "git+https://github.com/Nigel-wei-zhe/lazyhole-agent.git"
   },
   "bugs": {
-    "url": "https://github.com/Nigel-wei-zhe/lazyhole/issues"
+    "url": "https://github.com/Nigel-wei-zhe/lazyhole-agent/issues"
   },
-  "homepage": "https://github.com/Nigel-wei-zhe/lazyhole#readme",
+  "homepage": "https://github.com/Nigel-wei-zhe/lazyhole-agent#readme",
   "keywords": [
     "telegram-bot",
     "ai-agent",
