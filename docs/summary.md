@@ -1,37 +1,31 @@
 # LazyHole-Agent 專案摘要 (L1)
 
-## 專案大綱
-極簡化遠端 Telegram AI Agent。無長期記憶、無自我學習，專注於高效的指令執行與網頁研究任務。
+## 核心入口 (Entry Points)
+- **啟動入口**: `server.js` (負責 Telegram Polling、白名單過濾、指令路由)。
+- **邏輯入口**: `src/agent/index.js` (負責 LLM 多輪對話決策與工具呼叫)。
 
-## 技術棧
-- Runtime: Node.js
-- API: axios
-- Env: dotenv
-- UI: chalk, cli-box
-- LLM: MiniMax API (chatcompletion_v2, tool use)
-- HTML→Markdown: turndown
+## 技術設計 (Tech Design)
+- **核心理念**: 極簡無狀態、無記憶、基於指令執行的 Telegram AI Agent。
+- **關鍵依賴**: 使用 MiniMax (chatcompletion_v2) 作為大腦，Telegram Long Polling 作為感官。
+- **數據流**: Telegram → server.js (路由) → Agent Loop (決策) → Tools (執行) → Telegram。
 
-## 功能細節 (L2 - 節約 Token 請只讀取感興趣的檔案)
-- [AI Agent 與工具（shell / web_fetch / read_skill）](./features/agent.md)
-- [Skills 自訂能力](./features/skills.md)
-- [遠端指令執行 /run 直通](./features/remote-exec.md)
-- [長輪詢機制實作](./features/polling.md)
-- [部署與啟動方式](./features/deployment.md)
-- [終端機介面美化](./features/ui.md)
-- [日誌（error + operation）](./features/log.md)
-- [LLM 整合 (MiniMax)](./features/llm.md)
-- [白名單 (單一 TG user id)](./features/whitelist.md)
+## 模組職責 (Module Roles)
+- `src/agent/`: 核心決策邏輯、工具集定義 (`tools/`)、Skills 載入。
+- `src/llm/`: LLM Provider 抽象層，負責請求封裝與錯誤處理。
+- `src/utils/`: 基礎設施，包含 JSONL 日誌 (`logger.js`) 與 Telegram API 封裝。
+- `src/commands/`: 非 AI 決策的直通指令 (如 `/run`)。
+- `skills/`: 外部注入的靜態能力文件 (`<name>/SKILL.md`)。
 
-## 概念文件
-- [Agent Loop 策略（讀取類多輪／執行類單輪）](./concepts/agent-loop.md)
+## 功能索引 (L2 Details)
+- [**AI Agent 核心**](./features/agent.md): 決策循環與內建工具 (shell/fetch)。
+- [**Skills 擴展**](./features/skills.md): 自定義技能的載入與解析規範。
+- [**遠端指令 (Direct)**](./features/remote-exec.md): 繞過 Agent 直接執行的 `/run` 邏輯。
+- [**輪詢與通訊**](./features/polling.md): Telegram Long Polling 實作細節。
+- [**部署與環境**](./features/deployment.md): 環境變數與全域指令安裝。
+- [**UI/UX 呈現**](./features/ui.md): 伺服器終端機輸出美化。
+- [**日誌系統**](./features/log.md): Operation 與 Error 日誌結構。
+- [**LLM 整合**](./features/llm.md): MiniMax API 參數與 Provider 配置。
+- [**安全性控管**](./features/whitelist.md): 單一用戶白名單鎖定機制。
 
-## 檔案結構
-- server.js: Polling、白名單守門、路由（/run 直通 + 其餘進 agent）。
-- src/agent/: Agent 主邏輯、skills loader、tools（shell、read_skill）。
-- src/commands/run.js: /run 直通 shell（不經 LLM）。
-- src/llm/: LLM 抽象層與 providers。
-- src/utils/: logger（error + operation JSONL）、telegram。
-- skills/: 自訂能力（`<name>/SKILL.md`），啟動時載入、無熱重載。
-- package.json: 依賴與 lazyhole 全域命令。
-- log/error/: 錯誤日誌（每日一檔）。
-- log/operation/: 操作日誌 JSONL（用戶訊息、LLM 請求/回應、tool 呼叫、回傳內容）。
+## 概念文件 (Architecture)
+- [Agent Loop 策略](./concepts/agent-loop.md): 單輪與多輪任務的執行路徑差異。
