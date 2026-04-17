@@ -1,0 +1,17 @@
+{
+  "shell": {
+    "blocklist": {
+      "enabled": true,
+      "patterns": [
+        { "pattern": "rm\\s+(-[a-zA-Z]+\\s+)*(/|~|\\$HOME)(\\s|$)", "reason": "刪除根目錄或家目錄" },
+        { "pattern": "\\bmkfs(\\.|\\s)", "reason": "格式化檔案系統" },
+        { "pattern": "\\bdd\\b[^\\n]*\\bof=/dev/", "reason": "寫入 raw block device" },
+        { "pattern": ":\\(\\)\\s*\\{[^}]*\\};\\s*:", "reason": "Fork bomb" },
+        { "pattern": "\\b(shutdown|reboot|halt|poweroff)\\b", "reason": "系統關機或重啟" },
+        { "pattern": "chmod\\s+-R\\s+0?777\\s+/", "reason": "遞迴改權限 777 於根" },
+        { "pattern": "(curl|wget)\\b[^|]*\\|\\s*(sudo\\s+)?(sh|bash|zsh)\\b", "reason": "下載並直接執行遠端腳本" },
+        { "pattern": ">\\s*/dev/sd[a-z]", "reason": "直寫磁碟裝置" }
+      ]
+    }
+  }
+}

@@ -39,6 +39,25 @@ lazyhole
 
 非白名單使用者：靜默 drop，不回任何訊息。
 
+## 指令安全守門
+
+專案根目錄 `setting.json` 定義危險指令黑名單，`/run` 與 `exec_shell` 執行前都會過濾，命中即拒絕並回覆原因。
+
+```json
+{
+  "shell": {
+    "blocklist": {
+      "enabled": true,
+      "patterns": [
+        { "pattern": "\\b(shutdown|reboot|halt|poweroff)\\b", "reason": "系統關機或重啟" }
+      ]
+    }
+  }
+}
+```
+
+修改後需重啟 `lazyhole` 生效。細節見 [docs/features/safety.md](./docs/features/safety.md)。
+
 ## Agent 工具
 
 | 工具 | 用途 | 執行後 |

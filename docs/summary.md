@@ -26,6 +26,7 @@
 - [**日誌系統**](./features/log.md): Operation 與 Error 日誌結構。
 - [**LLM 整合**](./features/llm.md): MiniMax API 參數與 Provider 配置。
 - [**安全性控管**](./features/whitelist.md): 單一用戶白名單鎖定機制。
+- [**指令安全守門**](./features/safety.md): `setting.json` 黑名單正則過濾危險 shell 指令。
 
 ## 概念文件 (Architecture)
 - [Agent Loop 策略](./concepts/agent-loop.md): 單輪與多輪任務的執行路徑差異。
