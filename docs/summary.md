@@ -1,7 +1,7 @@
-# Kaidong (開洞) 專案摘要 (L1)
+# LazyHole 專案摘要 (L1)
 
 ## 專案大綱
-輕量級 Telegram AI Agent。LLM 依使用者訊息自行判斷是否呼叫 shell 工具執行指令，透過長輪詢回覆。
+極簡化遠端 Telegram AI Agent。無長期記憶、無自我學習，專注於高效的指令執行與網頁研究任務。
 
 ## 技術棧
 - Runtime: Node.js
@@ -32,6 +32,6 @@
 - src/llm/: LLM 抽象層與 providers。
 - src/utils/: logger（error + operation JSONL）、telegram。
 - skills/: 自訂能力（`<name>/SKILL.md`），啟動時載入、無熱重載。
-- package.json: 依賴與 kaidong 全域命令。
+- package.json: 依賴與 lazyhole 全域命令。
 - log/error/: 錯誤日誌（每日一檔）。
 - log/operation/: 操作日誌 JSONL（用戶訊息、LLM 請求/回應、tool 呼叫、回傳內容）。
