@@ -37,15 +37,22 @@ holeOpen
 
 非白名單使用者：靜默 drop，不回任何訊息。
 
+## Skills（自訂能力）
+
+在 `skills/<name>/SKILL.md` 放自訂能力說明，agent 啟動時載入。LLM 會在 system prompt 看到 skill 名稱與一行描述，需要時呼叫 `read_skill` 讀詳細，再透過 `exec_shell` 執行。詳見 [skills/README.md](./skills/README.md)。
+
+改 skill 後需重啟 `holeOpen`（無熱重載）。
+
 ## 專案結構
 
 ```
 server.js              # 入口（polling、白名單、路由）
 src/
-  agent/               # AI agent 主邏輯 + tools（shell）
+  agent/               # AI agent 主邏輯 + tools（shell、read_skill）+ skills loader
   commands/run.js      # /run 直通 shell
   llm/                 # LLM 抽象層與 providers
   utils/               # logger、telegram
+skills/                # 自訂能力（每個一個資料夾含 SKILL.md）
 docs/                  # L1 summary + L2 features
 log/
   error/               # 錯誤日誌（每日一檔）

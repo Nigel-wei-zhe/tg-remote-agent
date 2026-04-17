@@ -28,9 +28,10 @@ log/
 | `user.message` | 收到訊息 | chatId, userId, sender, text, route? |
 | `llm.request` | 送出 LLM 請求 | provider, model, payload |
 | `llm.response` | 收到 LLM 回應 | provider, data (完整 response) |
-| `tool.call` | Agent 呼叫工具 | name, command |
-| `tool.result` | 工具執行結果 | command, ok, output |
-| `bot.reply` | 回傳給 TG 的內容 | chatId, text, phase (`llm.content` / `tool.pre` / `tool.result` / `empty`) |
+| `tool.call` | Agent 呼叫工具 | name, command / args, round |
+| `tool.result` | 工具執行結果 | name, command?, skillName?, ok, output?, round |
+| `tool.unknown` | LLM 要求了未知工具 | name, round |
+| `bot.reply` | 回傳給 TG 的內容 | chatId, text, phase (`llm.content` / `tool.pre` / `tool.result` / `skill.read` / `empty` / `max_rounds`), round? |
 
 ## 注意
 - operation log 包含 LLM 完整對話與 shell 輸出，可能含敏感資訊。

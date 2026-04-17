@@ -12,6 +12,7 @@
 
 ## 功能細節 (L2 - 節約 Token 請只讀取感興趣的檔案)
 - [AI Agent 與 Shell 工具](./features/agent.md)
+- [Skills 自訂能力](./features/skills.md)
 - [遠端指令執行 /run 直通](./features/remote-exec.md)
 - [長輪詢機制實作](./features/polling.md)
 - [部署與啟動方式](./features/deployment.md)
@@ -22,10 +23,11 @@
 
 ## 檔案結構
 - server.js: Polling、白名單守門、路由（/run 直通 + 其餘進 agent）。
-- src/agent/: Agent 主邏輯與 tools（shell）。
+- src/agent/: Agent 主邏輯、skills loader、tools（shell、read_skill）。
 - src/commands/run.js: /run 直通 shell（不經 LLM）。
 - src/llm/: LLM 抽象層與 providers。
 - src/utils/: logger（error + operation JSONL）、telegram。
+- skills/: 自訂能力（`<name>/SKILL.md`），啟動時載入、無熱重載。
 - package.json: 依賴與 holeOpen 全域命令。
 - log/error/: 錯誤日誌（每日一檔）。
 - log/operation/: 操作日誌 JSONL（用戶訊息、LLM 請求/回應、tool 呼叫、回傳內容）。
