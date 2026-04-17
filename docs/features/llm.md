@@ -17,7 +17,7 @@ chat({ messages, tools }) -> message
 ## MiniMax 實作 (`src/llm/providers/minimax.js`)
 - Endpoint: `POST https://api.minimax.io/v1/text/chatcompletion_v2`
 - Auth: `Bearer {MINIMAX_API_KEY}`
-- Timeout: 30 秒
+- Timeout: 120 秒（含 reasoning 與大 context 時需要較寬裕）
 - 預設模型: `MiniMax-M2.7`
 - 帶 tools 時同時設 `tool_choice: 'auto'`
 

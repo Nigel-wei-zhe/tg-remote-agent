@@ -1,6 +1,6 @@
 # tg-remote-agent
 
-部署在伺服器上的 Telegram AI Agent。你傳自然語言，LLM 判斷需不需要執行 shell 指令；必要時直接幫你跑並回傳結果。
+部署在伺服器上的 Telegram AI Agent。你傳自然語言，LLM 判斷是聊天、跑 shell 指令、抓網頁研究、還是使用你定義的 skill，直接在 TG 回覆結果。
 
 ## 安裝
 
@@ -32,10 +32,20 @@ holeOpen
 
 | 輸入 | 行為 |
 |------|------|
-| 任意自然語言 | 進 AI agent，LLM 自行判斷是否呼叫 `exec_shell` 工具 |
+| 任意自然語言 | 進 AI agent，LLM 自行判斷用哪個工具（`exec_shell` / `web_fetch` / `read_skill`）或純文字回覆 |
 | `/run <指令>` | 直通 shell，不經 LLM（除錯／強制執行的逃生口） |
 
 非白名單使用者：靜默 drop，不回任何訊息。
+
+## Agent 工具
+
+| 工具 | 用途 | 執行後 |
+|------|------|--------|
+| `exec_shell` | 伺服器執行 shell 指令 | 結果直接給使用者，結束 |
+| `web_fetch` | 抓網頁（HTML→markdown） | 結果塞回 LLM 繼續下一輪 |
+| `read_skill` | 讀 skill 完整說明 | 結果塞回 LLM 繼續下一輪 |
+
+Loop 上限 5 輪。設計原理見 [docs/concepts/agent-loop.md](./docs/concepts/agent-loop.md)。
 
 ## Skills（自訂能力）
 
@@ -48,7 +58,7 @@ holeOpen
 ```
 server.js              # 入口（polling、白名單、路由）
 src/
-  agent/               # AI agent 主邏輯 + tools（shell、read_skill）+ skills loader
+  agent/               # AI agent 主邏輯 + tools（shell、web_fetch、read_skill）+ skills loader
   commands/run.js      # /run 直通 shell
   llm/                 # LLM 抽象層與 providers
   utils/               # logger、telegram

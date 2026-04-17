@@ -3,14 +3,16 @@ const { logOp } = require('../../utils/logger');
 
 const ENDPOINT = 'https://api.minimax.io/v1/text/chatcompletion_v2';
 
-async function chat({ messages, tools }) {
+async function chat({ messages, tools, toolChoice }) {
     const apiKey = process.env.MINIMAX_API_KEY;
     const model = process.env.MINIMAX_MODEL || 'MiniMax-M2.7';
 
     const payload = { model, messages };
     if (tools && tools.length) {
         payload.tools = tools;
-        payload.tool_choice = 'auto';
+        payload.tool_choice = toolChoice || 'auto';
+    } else if (toolChoice) {
+        payload.tool_choice = toolChoice;
     }
 
     logOp('llm.request', { provider: 'minimax', model, payload });
@@ -20,7 +22,7 @@ async function chat({ messages, tools }) {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${apiKey}`,
         },
-        timeout: 30000,
+        timeout: 120000,
     });
 
     logOp('llm.response', { provider: 'minimax', data: response.data });

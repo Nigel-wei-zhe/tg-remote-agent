@@ -13,3 +13,6 @@ Thumbs.db
 
 # 執行日誌
 log/*
+
+# 技能
+skills/*

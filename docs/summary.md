@@ -9,9 +9,10 @@
 - Env: dotenv
 - UI: chalk, cli-box
 - LLM: MiniMax API (chatcompletion_v2, tool use)
+- HTML→Markdown: turndown
 
 ## 功能細節 (L2 - 節約 Token 請只讀取感興趣的檔案)
-- [AI Agent 與 Shell 工具](./features/agent.md)
+- [AI Agent 與工具（shell / web_fetch / read_skill）](./features/agent.md)
 - [Skills 自訂能力](./features/skills.md)
 - [遠端指令執行 /run 直通](./features/remote-exec.md)
 - [長輪詢機制實作](./features/polling.md)
@@ -20,6 +21,9 @@
 - [日誌（error + operation）](./features/log.md)
 - [LLM 整合 (MiniMax)](./features/llm.md)
 - [白名單 (單一 TG user id)](./features/whitelist.md)
+
+## 概念文件
+- [Agent Loop 策略（讀取類多輪／執行類單輪）](./concepts/agent-loop.md)
 
 ## 檔案結構
 - server.js: Polling、白名單守門、路由（/run 直通 + 其餘進 agent）。
