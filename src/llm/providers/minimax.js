@@ -1,30 +1,33 @@
-const axios = require("axios")
-// https://api.minimax.io/v1/chat/completions
-// https://api.minimax.io/v1/text/chatcompletion_v2
-const ENDPOINT = "https://api.minimax.io/v1/text/chatcompletion_v2"
+const axios = require('axios');
+const { logOp } = require('../../utils/logger');
 
-async function ask(userMessage) {
-  const apiKey = process.env.MINIMAX_API_KEY
-  const model = process.env.MINIMAX_MODEL || "MiniMax-M2.7"
+const ENDPOINT = 'https://api.minimax.io/v1/text/chatcompletion_v2';
 
-  const response = await axios.post(
-    ENDPOINT,
-    {
-      model,
-      messages: [{ role: "user", name: "User", content: userMessage }],
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      timeout: 30000,
-    },
-  )
+async function chat({ messages, tools }) {
+    const apiKey = process.env.MINIMAX_API_KEY;
+    const model = process.env.MINIMAX_MODEL || 'MiniMax-M2.7';
 
-  const choice = response.data.choices?.[0]
-  if (!choice) throw new Error("API 未回傳任何結果。")
-  return choice.message.content
+    const payload = { model, messages };
+    if (tools && tools.length) {
+        payload.tools = tools;
+        payload.tool_choice = 'auto';
+    }
+
+    logOp('llm.request', { provider: 'minimax', model, payload });
+
+    const response = await axios.post(ENDPOINT, payload, {
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+        },
+        timeout: 30000,
+    });
+
+    logOp('llm.response', { provider: 'minimax', data: response.data });
+
+    const choice = response.data.choices?.[0];
+    if (!choice) throw new Error('API 未回傳任何結果。');
+    return choice.message;
 }
 
-module.exports = { ask }
+module.exports = { chat };

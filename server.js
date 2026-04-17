@@ -5,15 +5,19 @@ const chalk = require('chalk');
 const Box = require('cli-box');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const { sendMessage } = require('./src/utils/telegram');
-const { logError } = require('./src/utils/logger');
+const { logError, logOp } = require('./src/utils/logger');
 const runCmd = require('./src/commands/run');
-const askCmd = require('./src/commands/ask');
+const agent = require('./src/agent');
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const ALLOWED_USER_ID = process.env.TELEGRAM_ALLOWED_USER_ID;
 
 if (!TELEGRAM_TOKEN) {
     console.error(chalk.red.bold('❌ 錯誤：找不到 TELEGRAM_TOKEN！請檢查 .env 檔案。'));
+    process.exit(1);
+}
+if (!ALLOWED_USER_ID) {
+    console.error(chalk.red.bold('❌ 錯誤：找不到 TELEGRAM_ALLOWED_USER_ID！請在 .env 設定允許的 Telegram user id。'));
     process.exit(1);
 }
 
@@ -21,18 +25,23 @@ let lastUpdateId = 0;
 const timestamp = () => chalk.gray(`[${new Date().toLocaleTimeString()}]`);
 
 async function handleUpdate(update) {
-    if (update.message && update.message.text) {
-        const chatId = update.message.chat.id;
-        const text = update.message.text;
-        const sender = update.message.from.username || update.message.from.first_name || 'Unknown';
+    if (!update.message || !update.message.text) return;
 
-        if (text.startsWith('/ask ')) {
-            await askCmd.handle(chatId, text, sender);
-        } else if (text.startsWith('/run ')) {
-            runCmd.handle(chatId, text, sender);
-        } else {
-            sendMessage(chatId, '收到！請使用 `/run <指令>` 執行指令，或 `/ask <問題>` 詢問 AI。');
-        }
+    const { chat, from, text } = update.message;
+    const chatId = chat.id;
+    const userId = String(from.id);
+    const sender = from.username || from.first_name || 'Unknown';
+
+    if (userId !== String(ALLOWED_USER_ID)) {
+        logOp('auth.blocked', { userId, sender, chatId, text });
+        console.log(`${timestamp()} ${chalk.bgRed.white(' DENY ')} ${chalk.red(`@${sender} (${userId})`)}`);
+        return;
+    }
+
+    if (text.startsWith('/run ')) {
+        await runCmd.handle(chatId, text, sender, userId);
+    } else {
+        await agent.handle(chatId, text, sender, userId);
     }
 }
 
@@ -66,12 +75,13 @@ function printBanner() {
             e:  '│', se: '╯', s:  '─',
             sw: '╰', w: '│'
         }
-    }, `\n${chalk.cyan.bold('🚀 TG Remote Agent')}\n\n${chalk.gray('Secure remote execution agent')}`);
+    }, `\n${chalk.cyan.bold('🚀 TG Remote Agent')}\n\n${chalk.gray('AI agent with shell tool')}`);
 
     console.log(b);
     console.log();
     console.log(`  ${chalk.green('●')} ${chalk.bold('Status:')}  ${chalk.green('Polling Active')}`);
-    console.log(`  ${chalk.magenta('●')} ${chalk.bold('Mode:')}    ${chalk.magenta('Command Execution')}`);
+    console.log(`  ${chalk.magenta('●')} ${chalk.bold('Mode:')}    ${chalk.magenta('AI Agent')}`);
+    console.log(`  ${chalk.blue('●')} ${chalk.bold('Allow:')}   ${chalk.blue(ALLOWED_USER_ID)}`);
     console.log(`  ${chalk.yellow('●')} ${chalk.bold('Exit:')}    ${chalk.yellow('Press "q" to quit')}`);
     console.log();
     console.log(chalk.gray('─'.repeat(52)));

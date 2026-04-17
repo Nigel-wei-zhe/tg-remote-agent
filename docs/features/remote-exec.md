@@ -1,12 +1,16 @@
-# 遠端指令執行 (Remote Command Execution)
+# 遠端指令執行 /run（直通逃生口）
 
-## 功能說明
-- 使用者可透過 Telegram 對 Bot 發送 /run <指令>。
-- Bot 會在伺服器背景呼叫 child_process.exec() 執行該指令。
-- 執行完成後，將 stdout 或 stderr 以 Markdown 代碼區塊格式回傳給使用者。
-- 指令執行 timeout 為 30 秒；逾時後自動終止並回傳友善錯誤訊息。
-- output 超過 3800 字元自動截斷，末尾附加 `...(已截斷)`，避免觸發 Telegram 4096 字元上限。
+## 功能
+- `/run <指令>`：不經 LLM，直接執行 shell 指令並回傳 stdout/stderr（Markdown code block）。
+- 保留作為除錯與強制執行的逃生口；一般情況下直接打自然語言讓 agent 判斷。
 
-## 安全注意事項
-- 無權限過濾: 目前任何能接觸到 Bot 的人皆可執行指令。
-- 環境變數: 執行環境與 Node.js 程序相同，可存取本地檔案。
+## 限制
+- timeout 30 秒，逾時終止並回覆友善訊息。
+- 輸出超過 3800 字元截斷，尾端附 `...(已截斷)`（Telegram 4096 字元上限）。
+
+## 安全
+- 僅 `TELEGRAM_ALLOWED_USER_ID` 對應的使用者可觸發（白名單在 `server.js` 入口）。
+- 執行環境與 Node.js 程序相同，可存取本地檔案。
+
+## 實作
+- `src/commands/run.js`：呼叫共用的 `src/agent/tools/shell.js`。
