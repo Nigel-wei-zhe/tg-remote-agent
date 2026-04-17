@@ -1,19 +1,19 @@
 {
-  "name": "tg-remote-agent",
+  "name": "kaidong",
   "version": "1.0.0",
   "description": "A lightweight Telegram AI Agent with shell execution capabilities, powered by LLM tool use.",
   "main": "server.js",
   "bin": {
-    "holeOpen": "./server.js"
+    "kaidong": "./server.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Nigel-wei-zhe/tg-remote-agent.git"
+    "url": "git+https://github.com/Nigel-wei-zhe/kaidong.git"
   },
   "bugs": {
-    "url": "https://github.com/Nigel-wei-zhe/tg-remote-agent/issues"
+    "url": "https://github.com/Nigel-wei-zhe/kaidong/issues"
   },
-  "homepage": "https://github.com/Nigel-wei-zhe/tg-remote-agent#readme",
+  "homepage": "https://github.com/Nigel-wei-zhe/kaidong#readme",
   "keywords": [
     "telegram-bot",
     "ai-agent",

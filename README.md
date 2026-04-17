@@ -1,4 +1,4 @@
-# tg-remote-agent
+# Kaidong (開洞)
 
 部署在伺服器上的 Telegram AI Agent。你傳自然語言，LLM 判斷是聊天、跑 shell 指令、抓網頁研究、還是使用你定義的 skill，直接在 TG 回覆結果。
 
@@ -25,7 +25,7 @@ LLM_PROVIDER=minimax          # 可選
 ## 啟動
 
 ```bash
-holeOpen
+kaidong
 ```
 
 ## 使用方式
