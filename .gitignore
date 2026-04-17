@@ -16,3 +16,7 @@ log/*
 
 # 技能
 skills/*
+
+# 開發工具
+.claude/
+.gemini/

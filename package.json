@@ -1,17 +1,29 @@
 {
   "name": "tg-remote-agent",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A lightweight Telegram AI Agent with shell execution capabilities, powered by LLM tool use.",
+  "main": "server.js",
   "bin": {
     "holeOpen": "./server.js"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nigel-wei-zhe/tg-remote-agent.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nigel-wei-zhe/tg-remote-agent/issues"
+  },
+  "homepage": "https://github.com/Nigel-wei-zhe/tg-remote-agent#readme",
+  "keywords": [
+    "telegram-bot",
+    "ai-agent",
+    "llm",
+    "shell-executor",
+    "minimax",
+    "automation"
+  ],
+  "author": "Nigel-wei-zhe",
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.15.0",
     "chalk": "^4.1.2",
