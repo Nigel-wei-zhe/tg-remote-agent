@@ -1,19 +1,19 @@
 {
-  "name": "kaidong",
+  "name": "lazyhole",
   "version": "1.0.0",
-  "description": "A lightweight Telegram AI Agent with shell execution capabilities, powered by LLM tool use.",
+  "description": "A minimalist, zero-memory Telegram AI Agent for lazy server management.",
   "main": "server.js",
   "bin": {
-    "kaidong": "./server.js"
+    "lazyhole": "./server.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Nigel-wei-zhe/kaidong.git"
+    "url": "git+https://github.com/Nigel-wei-zhe/lazyhole.git"
   },
   "bugs": {
-    "url": "https://github.com/Nigel-wei-zhe/kaidong/issues"
+    "url": "https://github.com/Nigel-wei-zhe/lazyhole/issues"
   },
-  "homepage": "https://github.com/Nigel-wei-zhe/kaidong#readme",
+  "homepage": "https://github.com/Nigel-wei-zhe/lazyhole#readme",
   "keywords": [
     "telegram-bot",
     "ai-agent",

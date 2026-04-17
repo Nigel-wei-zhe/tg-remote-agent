@@ -1,6 +1,8 @@
-# Kaidong (開洞)
+# LazyHole
 
-部署在伺服器上的 Telegram AI Agent。你傳自然語言，LLM 判斷是聊天、跑 shell 指令、抓網頁研究、還是使用你定義的 skill，直接在 TG 回覆結果。
+極簡、無記憶、隨插即用的 Telegram AI Agent。
+
+不同於複雜的 Agent 框架，**LazyHole** 專為「懶」而設計：無須配置資料庫、沒有複雜的長期記憶，只專注於即時透過 Telegram 控制伺服器、執行 Shell 指令與網頁研究。
 
 ## 安裝
 
@@ -25,7 +27,7 @@ LLM_PROVIDER=minimax          # 可選
 ## 啟動
 
 ```bash
-kaidong
+lazyhole
 ```
 
 ## 使用方式
