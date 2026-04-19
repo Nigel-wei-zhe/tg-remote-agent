@@ -34,8 +34,9 @@ lazyhole
 
 | 輸入 | 行為 |
 |------|------|
-| 任意自然語言 | 進 AI agent，LLM 自行判斷用哪個工具（`exec_shell` / `web_fetch` / `read_skill`）或純文字回覆 |
+| 任意自然語言 | 進 AI agent，LLM 自行判斷用哪個工具（`exec_shell` / `web_fetch` / `read_skill` / `remember` / `end_session`）或純文字回覆 |
 | `/run <指令>` | 直通 shell，不經 LLM（除錯／強制執行的逃生口） |
+| `/memory` | 顯示當前 chatId 的短期記憶 session JSON；`/memory clear` 清除 |
 
 非白名單使用者：靜默 drop，不回任何訊息。
 
@@ -65,6 +66,10 @@ lazyhole
 | `exec_shell` | 伺服器執行 shell 指令 | 結果直接給使用者，結束 |
 | `web_fetch` | 抓網頁（HTML→markdown） | 結果塞回 LLM 繼續下一輪 |
 | `read_skill` | 讀 skill 完整說明 | 結果塞回 LLM 繼續下一輪 |
+| `remember` | 鎖定結構化欄位到 session.locked（多階段 skill 用） | 結果塞回 LLM 繼續下一輪 |
+| `end_session` | 任務完成或取消時清空 session | 結果塞回 LLM 繼續下一輪 |
+
+短期記憶（session）：server 自動記錄最近對話、`read_skill` 自動標記進行中 skill、30 分鐘 idle 自動過期。細節見 [docs/features/session-memory.md](./docs/features/session-memory.md)。
 
 Loop 上限 5 輪。設計原理見 [docs/concepts/agent-loop.md](./docs/concepts/agent-loop.md)。
 
@@ -79,10 +84,10 @@ Loop 上限 5 輪。設計原理見 [docs/concepts/agent-loop.md](./docs/concept
 ```
 server.js              # 入口（polling、白名單、路由）
 src/
-  agent/               # AI agent 主邏輯 + tools（shell、web_fetch、read_skill）+ skills loader
-  commands/run.js      # /run 直通 shell
+  agent/               # AI agent 主邏輯 + tools（shell、web_fetch、read_skill、remember、end_session）+ skills loader
+  commands/            # /run 直通 shell、/memory 檢視短期記憶
   llm/                 # LLM 抽象層與 providers
-  utils/               # logger、telegram
+  utils/               # logger、telegram、session（短期記憶）
 skills/                # 自訂能力（每個一個資料夾含 SKILL.md）
 docs/                  # L1 summary + L2 features
 log/

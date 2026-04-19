@@ -10,15 +10,16 @@
 - **數據流**: Telegram → server.js (路由) → Agent Loop (決策) → Tools (執行) → Telegram。
 
 ## 模組職責 (Module Roles)
-- `src/agent/`: 核心決策邏輯、工具集定義 (`tools/`)、Skills 載入。
+- `src/agent/`: 核心決策邏輯、工具集定義 (`tools/`，含 shell / web_fetch / read_skill / remember / end_session)、Skills 載入。
 - `src/llm/`: LLM Provider 抽象層，負責請求封裝與錯誤處理。
-- `src/utils/`: 基礎設施，包含 JSONL 日誌 (`logger.js`) 與 Telegram API 封裝。
-- `src/commands/`: 非 AI 決策的直通指令 (如 `/run`)。
+- `src/utils/`: 基礎設施，包含 JSONL 日誌 (`logger.js`)、Telegram API 封裝、短期記憶 (`session.js`)。
+- `src/commands/`: 非 AI 決策的直通指令 (`/run`、`/memory`)。
 - `skills/`: 外部注入的靜態能力文件 (`<name>/SKILL.md`)。
 
 ## 功能索引 (L2 Details)
 - [**AI Agent 核心**](./features/agent.md): 決策循環與內建工具 (shell/fetch)。
 - [**Skills 擴展**](./features/skills.md): 自定義技能的載入與解析規範。
+- [**短期記憶 (Session)**](./features/session-memory.md): 跨輪對話狀態、`remember` / `end_session` 工具、`/memory` 指令。
 - [**遠端指令 (Direct)**](./features/remote-exec.md): 繞過 Agent 直接執行的 `/run` 邏輯。
 - [**輪詢與通訊**](./features/polling.md): Telegram Long Polling 實作細節。
 - [**部署與環境**](./features/deployment.md): 環境變數與全域指令安裝。

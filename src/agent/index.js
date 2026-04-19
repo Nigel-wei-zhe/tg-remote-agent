@@ -3,12 +3,16 @@ const llm = require('../llm');
 const shell = require('./tools/shell');
 const readSkill = require('./tools/read_skill');
 const webFetch = require('./tools/web_fetch');
+const remember = require('./tools/remember');
+const endSession = require('./tools/end_session');
 const skills = require('./skills');
+const sessionStore = require('../utils/session');
 const { sendMessage, startTyping } = require('../utils/telegram');
 const { logError, logOp } = require('../utils/logger');
 
 const timestamp = () => chalk.gray(`[${new Date().toLocaleTimeString()}]`);
 const MAX_ROUNDS = 5;
+const LOCKED_PREVIEW_CHARS = 300;
 
 const BASE_SYSTEM_PROMPT = `你是一個部署在伺服器上的 Telegram AI 助理。
 
@@ -16,9 +20,14 @@ const BASE_SYSTEM_PROMPT = `你是一個部署在伺服器上的 Telegram AI 助
 - exec_shell：執行 shell 指令。執行後不會再有回合給你總結，請一次下對指令。
 - web_fetch：抓取並閱讀網頁內容，適合做研究、查資料、閱讀文章。可連續呼叫多次。
 - read_skill：讀取 skill 完整說明。system prompt 列出 skill 時，使用者意圖相關就先 read_skill。
+- remember：把用戶已確認、要跨輪保留的結構化欄位寫入 session.locked（如已審過的標題、完稿）。一般對話脈絡 server 會自動記錄，不需手動存。
+- end_session：任務成功或用戶明確取消時呼叫，清掉 session；之後可再回一段收尾文字。
+
+對話狀態：
+- 若 system prompt 含「[對話狀態]」區塊，代表本輪是既有任務延續。優先把用戶訊息理解為對該狀態的回應（同意／修改／取消），而不是全新請求。
 
 回合規則：
-- web_fetch 與 read_skill 屬於讀取類工具，呼叫後會給你下一輪繼續決策。
+- web_fetch、read_skill、remember、end_session 屬於讀取類工具，呼叫後會給你下一輪繼續決策。
 - exec_shell 屬於執行類工具，呼叫後會立刻把結果給使用者並結束本次任務。
 - 純聊天、解釋概念、無需伺服器狀態時，直接用文字回答即可。
 
@@ -33,11 +42,19 @@ async function handle(chatId, text, sender, userId) {
     logOp('user.message', { chatId, userId, sender, text });
     console.log(`${timestamp()} ${chalk.bgBlue.white(' AGENT ')} ${chalk.cyan(text.slice(0, 60))} ${chalk.dim(`@${sender}`)}`);
 
+    sessionStore.appendHistory(chatId, 'user', text);
+
     const stopTyping = startTyping(chatId);
     try {
         const availableSkills = skills.load();
-        const systemPrompt = BASE_SYSTEM_PROMPT + skills.indexText();
-        const tools = [shell.definition, webFetch.definition];
+        const session = sessionStore.loadSession(chatId);
+        const systemPrompt = BASE_SYSTEM_PROMPT + skills.indexText() + renderSessionPrompt(session);
+        const tools = [
+            shell.definition,
+            webFetch.definition,
+            remember.definition,
+            endSession.definition,
+        ];
         if (availableSkills.length > 0) tools.push(readSkill.definition);
 
         const messages = [
@@ -57,6 +74,7 @@ async function handle(chatId, text, sender, userId) {
                 await sendMessage(chatId, narration);
                 logOp('bot.reply', { chatId, text: narration, phase: 'llm.content', round });
                 console.log(`${timestamp()} ${chalk.bgGreen.black(' SAY ')} ${chalk.dim(content.slice(0, 60))}`);
+                sessionStore.appendHistory(chatId, 'assistant', content);
             }
 
             if (toolCalls.length === 0) {
@@ -77,6 +95,10 @@ async function handle(chatId, text, sender, userId) {
                     await handleReadSkill({ chatId, call, args, round, messages });
                 } else if (name === 'web_fetch') {
                     await handleWebFetch({ chatId, call, args, round, messages });
+                } else if (name === 'remember') {
+                    await handleRemember({ chatId, call, args, round, messages });
+                } else if (name === 'end_session') {
+                    await handleEndSession({ chatId, call, round, messages });
                 } else if (name === 'exec_shell') {
                     await handleExecShell({ chatId, call, args, round });
                     shouldTerminate = true;
@@ -114,6 +136,7 @@ async function handleReadSkill({ chatId, call, args, round, messages }) {
 
     const { ok, body } = readSkill.run(skillName);
     logOp('tool.result', { name: 'read_skill', skillName, ok, round });
+    if (ok) sessionStore.markActiveSkill(chatId, skillName);
     messages.push({ role: 'tool', tool_call_id: call.id, content: body });
 }
 
@@ -129,6 +152,30 @@ async function handleWebFetch({ chatId, call, args, round, messages }) {
     const { ok, text, status } = await webFetch.run(url);
     logOp('tool.result', { name: 'web_fetch', url, ok, status, length: text.length, round });
     messages.push({ role: 'tool', tool_call_id: call.id, content: text });
+}
+
+async function handleRemember({ chatId, call, args, round, messages }) {
+    const fields = args.fields || {};
+    const keys = Object.keys(fields);
+    console.log(`${timestamp()} ${chalk.bgBlue.white(' MEM ')} ${chalk.blue(`remember ${keys.join(',')}`)}`);
+    logOp('tool.call', { name: 'remember', keys, round });
+
+    const pre = `🧠 鎖定欄位: ${keys.join(', ') || '(空)'}`;
+    await sendMessage(chatId, pre);
+    logOp('bot.reply', { chatId, text: pre, phase: 'mem.remember', round });
+
+    const { ok, body } = remember.run(chatId, fields);
+    logOp('tool.result', { name: 'remember', keys, ok, round });
+    messages.push({ role: 'tool', tool_call_id: call.id, content: body });
+}
+
+async function handleEndSession({ chatId, call, round, messages }) {
+    console.log(`${timestamp()} ${chalk.bgBlue.white(' MEM ')} ${chalk.blue('end_session')}`);
+    logOp('tool.call', { name: 'end_session', round });
+
+    const { ok, body } = endSession.run(chatId);
+    logOp('tool.result', { name: 'end_session', ok, round });
+    messages.push({ role: 'tool', tool_call_id: call.id, content: body });
 }
 
 async function handleExecShell({ chatId, call, args, round }) {
@@ -165,10 +212,37 @@ async function forceFinalSummary({ chatId, messages, tools }) {
         : `⚠️ 已達互動上限 ${MAX_ROUNDS}，且無法從現有資料產出總結。`;
     await sendMessage(chatId, body);
     logOp('bot.reply', { chatId, text: body, phase: 'max_rounds.summary' });
+    if (content) sessionStore.appendHistory(chatId, 'assistant', content);
 }
 
 function safeParse(s) {
     try { return JSON.parse(s || '{}'); } catch { return {}; }
+}
+
+function renderSessionPrompt(session) {
+    if (!session) return '';
+    const lines = ['\n\n[對話狀態]'];
+    if (session.activeSkill) lines.push(`當前進行中的 skill: ${session.activeSkill}`);
+
+    const lockedKeys = Object.keys(session.locked || {});
+    if (lockedKeys.length > 0) {
+        lines.push('已鎖定欄位 (locked):');
+        for (const k of lockedKeys) {
+            const v = session.locked[k];
+            const preview = typeof v === 'string'
+                ? (v.length > LOCKED_PREVIEW_CHARS ? `${v.slice(0, LOCKED_PREVIEW_CHARS)}…` : v)
+                : JSON.stringify(v);
+            lines.push(`  ${k}: ${preview}`);
+        }
+    }
+
+    if ((session.history || []).length > 0) {
+        lines.push('最近對話 (舊→新):');
+        for (const h of session.history) lines.push(`  ${h.role}: ${h.content}`);
+    }
+
+    lines.push('若以上區塊存在，優先把用戶訊息理解為對該狀態的延續回應；任務完成或用戶明確取消時呼叫 end_session。');
+    return lines.join('\n');
 }
 
 module.exports = { handle };

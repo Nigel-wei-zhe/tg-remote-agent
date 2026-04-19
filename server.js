@@ -7,6 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { logError, logOp } = require('./src/utils/logger');
 const runCmd = require('./src/commands/run');
+const memoryCmd = require('./src/commands/memory');
 const agent = require('./src/agent');
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
@@ -40,6 +41,8 @@ async function handleUpdate(update) {
 
     if (text.startsWith('/run ')) {
         await runCmd.handle(chatId, text, sender, userId);
+    } else if (text === '/memory' || text.startsWith('/memory ')) {
+        await memoryCmd.handle(chatId, text, sender, userId);
     } else {
         await agent.handle(chatId, text, sender, userId);
     }

@@ -45,3 +45,12 @@ description: <一句話>       # 會塞進 system prompt，精簡
 - `description` 寫「何時該用」而非「做什麼」。
 - body 附具體範例指令，降低 LLM 拼錯參數的機率。
 - 對應 CLI 必須是**非互動**（不會讀 stdin），否則 `exec_shell` 會 timeout。
+
+## 跨輪狀態（Session）
+
+需要多階段對話才能完成的 skill（例：blog-poster）直接依賴 agent 內建的短期記憶：
+
+- Server 每輪自動把使用者訊息、LLM 回覆 append 到 `session.history`；`read_skill` 被呼叫時自動 `markActiveSkill`。下一輪 system prompt 會注入「[對話狀態]」區塊，LLM 無需主動讀取。
+- 用戶確認完成的結構化欄位（標題、完稿）由 LLM 透過 `remember({ fields })` 工具寫入 `session.locked`。
+- 任務成功或用戶取消時呼叫 `end_session` 清除 session。
+- 底層與細節見 [session-memory.md](./session-memory.md)。idle TTL 30 分鐘，`/memory` 指令可直接檢視。
