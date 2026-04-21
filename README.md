@@ -4,12 +4,6 @@
 
 不同於複雜的 Agent 框架，**LazyHole** 專為「懶」而設計：無須配置資料庫、沒有複雜的長期記憶，只專注於即時透過 Telegram 控制伺服器、執行 Shell 指令與網頁研究。
 
-## 安裝
-
-```bash
-npm install -g .
-```
-
 ## 設定
 
 複製 `.env.example` 為 `.env` 並填入：
@@ -27,6 +21,7 @@ LLM_PROVIDER=minimax          # 可選
 ## 啟動
 
 ```bash
+npm link  # 建立全域指令
 lazyhole
 ```
 
@@ -34,12 +29,12 @@ lazyhole
 
 ## 使用方式
 
-| 輸入 | 行為 |
-|------|------|
-| 任意自然語言 | 進 AI agent，LLM 自行判斷用哪個工具（`exec_shell` / `web_fetch` / `read_skill` / `remember` / `end_session`）或純文字回覆 |
-| `/run <指令>` | 直通 shell，不經 LLM（除錯／強制執行的逃生口） |
-| `/run --cwd <路徑> -- <指令>` | 在指定工作目錄執行直通 shell；`<路徑>` 含空白時請加引號 |
-| `/memory` | 顯示當前 chatId 的短期記憶 session JSON；`/memory clear` 清除 |
+| 輸入                          | 行為                                                                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 任意自然語言                  | 進 AI agent，LLM 自行判斷用哪個工具（`exec_shell` / `web_fetch` / `read_skill` / `remember` / `end_session`）或純文字回覆 |
+| `/run <指令>`                 | 直通 shell，不經 LLM（除錯／強制執行的逃生口）                                                                            |
+| `/run --cwd <路徑> -- <指令>` | 在指定工作目錄執行直通 shell；`<路徑>` 含空白時請加引號                                                                   |
+| `/memory`                     | 顯示當前 chatId 的短期記憶 session JSON；`/memory clear` 清除                                                             |
 
 非白名單使用者：靜默 drop，不回任何訊息。
 
@@ -55,7 +50,10 @@ lazyhole
     "blocklist": {
       "enabled": true,
       "patterns": [
-        { "pattern": "\\b(shutdown|reboot|halt|poweroff)\\b", "reason": "系統關機或重啟" }
+        {
+          "pattern": "\\b(shutdown|reboot|halt|poweroff)\\b",
+          "reason": "系統關機或重啟"
+        }
       ]
     }
   }
@@ -66,13 +64,13 @@ lazyhole
 
 ## Agent 工具
 
-| 工具 | 用途 | 執行後 |
-|------|------|--------|
-| `exec_shell` | 伺服器執行 shell 指令，可選 `cwd` | 結果直接給使用者，結束 |
-| `web_fetch` | 抓網頁（HTML→markdown） | 結果塞回 LLM 繼續下一輪 |
-| `read_skill` | 讀 skill 完整說明 | 結果塞回 LLM 繼續下一輪 |
-| `remember` | 鎖定結構化欄位到 session.locked（多階段 skill 用） | 結果塞回 LLM 繼續下一輪 |
-| `end_session` | 任務完成或取消時清空 session | 結果塞回 LLM 繼續下一輪 |
+| 工具          | 用途                                               | 執行後                  |
+| ------------- | -------------------------------------------------- | ----------------------- |
+| `exec_shell`  | 伺服器執行 shell 指令，可選 `cwd`                  | 結果直接給使用者，結束  |
+| `web_fetch`   | 抓網頁（HTML→markdown）                            | 結果塞回 LLM 繼續下一輪 |
+| `read_skill`  | 讀 skill 完整說明                                  | 結果塞回 LLM 繼續下一輪 |
+| `remember`    | 鎖定結構化欄位到 session.locked（多階段 skill 用） | 結果塞回 LLM 繼續下一輪 |
+| `end_session` | 任務完成或取消時清空 session                       | 結果塞回 LLM 繼續下一輪 |
 
 短期記憶（session）：server 自動記錄最近對話、`read_skill` 自動標記進行中 skill、30 分鐘 idle 自動過期。細節見 [docs/features/session-memory.md](./docs/features/session-memory.md)。
 
