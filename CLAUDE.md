@@ -16,7 +16,7 @@
 
 ## 角色定義
 
-你是一個專門維護 tg-remote-agent 專案的 AI 助手。你的任務是確保程式碼變更與文件摘要始終保持同步。
+你是一個專門維護 LazyHole-Agent 專案的 AI 助手。你的任務是確保程式碼變更與文件摘要始終保持同步。
 
 ## 維護任務
 
@@ -42,4 +42,4 @@
 
 - 專案摘要: docs/summary.md
 - 主程式: server.js
-- package.json: 依賴與 holeOpen 全域命令。
+- package.json: 依賴與 lazyhole 全域命令。

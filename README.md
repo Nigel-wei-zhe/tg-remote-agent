@@ -1,4 +1,4 @@
-# LazyHole-Agent (極簡懶人代理)
+# LazyHole-Agent
 
 極簡、無記憶、隨插即用的 Telegram AI Agent。
 
@@ -29,6 +29,8 @@ LLM_PROVIDER=minimax          # 可選
 ```bash
 lazyhole
 ```
+
+啟動後終端會顯示 `LazyHole-Agent` 品牌化面板，列出 `Polling`、模式、白名單 ID、CLI 指令與離開快捷鍵，事件流會接在面板下方輸出。
 
 ## 使用方式
 
@@ -77,7 +79,7 @@ Loop 上限 5 輪。設計原理見 [docs/concepts/agent-loop.md](./docs/concept
 
 在 `skills/<name>/SKILL.md` 放自訂能力說明，agent 啟動時載入。LLM 會在 system prompt 看到 skill 名稱與一行描述，需要時呼叫 `read_skill` 讀詳細，再透過 `exec_shell` 執行。詳見 [skills/README.md](./skills/README.md)。
 
-改 skill 後需重啟 `holeOpen`（無熱重載）。
+改 skill 後需重啟 `lazyhole`（無熱重載）。
 
 ## 專案結構
 

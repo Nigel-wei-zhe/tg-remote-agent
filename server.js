@@ -3,22 +3,25 @@ const path = require('path');
 const axios = require('axios');
 const chalk = require('chalk');
 const Box = require('cli-box');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
 
 const { logError, logOp } = require('./src/utils/logger');
 const runCmd = require('./src/commands/run');
 const memoryCmd = require('./src/commands/memory');
 const agent = require('./src/agent');
 
+const APP_NAME = 'LazyHole-Agent';
+const APP_COMMAND = 'lazyhole';
+const BANNER_WIDTH = 76;
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const ALLOWED_USER_ID = process.env.TELEGRAM_ALLOWED_USER_ID;
 
 if (!TELEGRAM_TOKEN) {
-    console.error(chalk.red.bold('❌ 錯誤：找不到 TELEGRAM_TOKEN！請檢查 .env 檔案。'));
+    console.error(chalk.red.bold(`[${APP_NAME}] 找不到 TELEGRAM_TOKEN，請檢查 .env 檔案。`));
     process.exit(1);
 }
 if (!ALLOWED_USER_ID) {
-    console.error(chalk.red.bold('❌ 錯誤：找不到 TELEGRAM_ALLOWED_USER_ID！請在 .env 設定允許的 Telegram user id。'));
+    console.error(chalk.red.bold(`[${APP_NAME}] 找不到 TELEGRAM_ALLOWED_USER_ID，請在 .env 設定允許的 Telegram user id。`));
     process.exit(1);
 }
 
@@ -70,24 +73,28 @@ async function pollUpdates() {
 
 function printBanner() {
     console.clear();
+    const pill = (style, label) => style(` ${label} `);
     const b = Box({
-        w: 50,
-        h: 5,
+        w: BANNER_WIDTH,
+        h: 9,
         marks: {
             nw: '╭', n: '─', ne: '╮',
             e:  '│', se: '╯', s:  '─',
             sw: '╰', w: '│'
         }
-    }, `\n${chalk.cyan.bold('🚀 TG Remote Agent')}\n\n${chalk.gray('AI agent with shell tool')}`);
+    }, [
+        '',
+        chalk.hex('#f59e0b').bold(APP_NAME),
+        chalk.gray('Telegram AI operations console for shell and web tasks'),
+        '',
+        `${pill(chalk.bgGreen.black.bold, 'ONLINE')} ${chalk.green('Polling active')}   ${pill(chalk.bgMagenta.white.bold, 'MODE')} ${chalk.magenta('AI Agent')}`,
+        `${pill(chalk.bgBlue.white.bold, 'ALLOW')} ${chalk.blue(ALLOWED_USER_ID)}   ${pill(chalk.bgYellow.black.bold, 'CLI')} ${chalk.yellow(APP_COMMAND)}`,
+        `${pill(chalk.bgCyan.black.bold, 'TRANSPORT')} ${chalk.cyan('Telegram polling')}   ${pill(chalk.bgWhite.black.bold, 'EXIT')} ${chalk.white('q / Ctrl+C')}`,
+    ].join('\n'));
 
     console.log(b);
     console.log();
-    console.log(`  ${chalk.green('●')} ${chalk.bold('Status:')}  ${chalk.green('Polling Active')}`);
-    console.log(`  ${chalk.magenta('●')} ${chalk.bold('Mode:')}    ${chalk.magenta('AI Agent')}`);
-    console.log(`  ${chalk.blue('●')} ${chalk.bold('Allow:')}   ${chalk.blue(ALLOWED_USER_ID)}`);
-    console.log(`  ${chalk.yellow('●')} ${chalk.bold('Exit:')}    ${chalk.yellow('Press "q" to quit')}`);
-    console.log();
-    console.log(chalk.gray('─'.repeat(52)));
+    console.log(chalk.gray(`  Live Event Stream  ${'─'.repeat(56)}`));
     console.log();
 }
 
@@ -97,7 +104,7 @@ if (process.stdin.isTTY) {
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', (key) => {
         if (key === 'q' || key === '\u0003') {
-            console.log(`\n${timestamp()} 👋 ${chalk.yellow('已按下 q，程式結束。')}`);
+            console.log(`\n${timestamp()} ${chalk.bgWhite.black(' EXIT ')} ${chalk.yellow(`${APP_NAME} stopped.`)}`);
             process.exit(0);
         }
     });

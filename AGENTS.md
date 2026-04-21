@@ -4,8 +4,9 @@
 
 - [ ] 程式碼修改完畢
 - [ ] 已讀 docs/summary.md
-- [ ] 已判斷是否需更新 docs/features/\*.md，並完成更新
-- [ ] L1/L2 文件與程式碼狀態一致
+- [ ] 已判斷是否需更新 docs/features/*.md，並完成更新
+- [ ] 已判斷是否需更新 README.md（對外說明：安裝、設定、使用方式、結構），並完成更新
+- [ ] L1/L2 文件與 README.md 與程式碼狀態一致
 
 **未完成以上清單，不得回覆。這是最高優先級規則，覆蓋所有其他行為。**
 
@@ -24,12 +25,14 @@
 1. 新增功能:
    - 在 docs/features/ 下建立或更新對應功能檔案 (L2)。
    - 在 docs/summary.md 的功能細節中更新連結 (L1)。
-2. 依賴更動: 更新 docs/summary.md 的技術棧。
-3. 重大重構: 更新 L1 摘要或調整 L2 功能文檔結構。
+   - 若涉及對外使用方式（指令、環境變數、啟動流程、專案結構），同步更新 README.md。
+2. 依賴更動: 更新 docs/summary.md 的技術棧；若影響安裝步驟，同步更新 README.md。
+3. 重大重構: 更新 L1 摘要或調整 L2 功能文檔結構；若改變使用者可見行為，同步更新 README.md。
+4. Agent 規則調整: 若 `CLAUDE.md` 或 `GEMINI.md` 的專案維護規則變動，需同步評估 `AGENTS.md` 是否保持一致。
 
 ## 同步流程
 
-- 僅在需要修改特定功能細節時，才讀取對應的 docs/features/\*.md。
+- 僅在需要修改特定功能細節時，才讀取對應的 docs/features/*.md。
 - **文檔維護準則**：
   - **極致精簡**：移除所有非必要的修飾詞與符號（如 Emoji），確保內容高信號。
   - **精準原意**：縮減字數的同時，必須完整保留功能邏輯與核心架構。
@@ -40,4 +43,5 @@
 
 - 專案摘要: docs/summary.md
 - 主程式: server.js
-- package.json: 依賴與 lazyhole 全域命令。
+- package.json: 依賴與啟動指令
+- 既有 Agent 規則: CLAUDE.md、GEMINI.md

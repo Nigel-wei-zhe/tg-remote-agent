@@ -2,7 +2,7 @@
 
 ## 啟動方式
 1. 全域安裝: 在專案目錄執行 `npm install -g .`。
-2. 任意目錄執行 `holeOpen` 啟動。
+2. 任意目錄執行 `lazyhole` 啟動。
 
 ## 必要環境變數
 - `TELEGRAM_TOKEN`: Bot token。
@@ -19,3 +19,4 @@
 - 按 q: 正常結束程序 (process.exit(0))。
 - 按 Ctrl+C: 同樣可離開。
 - 僅在 TTY 互動環境下啟用。
+- 啟動時先印 `LazyHole-Agent` 面板，再進入事件流日誌。

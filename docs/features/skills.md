@@ -23,7 +23,7 @@ description: <一句話>       # 會塞進 system prompt，精簡
 
 ## 載入機制
 - 啟動時掃 `skills/*/SKILL.md`，解析 frontmatter。
-- **無熱重載**，改動後需重啟 `holeOpen`。
+- **無熱重載**，改動後需重啟 `lazyhole`。
 - 模組：`src/agent/skills.js`（`load` / `get(name)` / `indexText()`）。
 
 ## 與 Agent 整合

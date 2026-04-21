@@ -78,7 +78,7 @@ LLM: (決定) 呼叫 exec_shell("ls /usr/local/bin")
 LLM: 呼叫 exec_shell("ls /usr/local/bin")
 → 執行
 → 結果塞回 messages
-→ LLM 第二次回覆：「你這台機器裝了 node、git、holeOpen... 看起來是開發機」
+→ LLM 第二次回覆：「你這台機器裝了 node、git、lazyhole... 看起來是開發機」
 完成。共 2 次 LLM call。
 ```
 

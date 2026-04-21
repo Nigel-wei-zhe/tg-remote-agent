@@ -2,7 +2,8 @@
 
 ## 核心設計
 - **Typing 指示器**: 指令執行或 LLM 等待期間，透過 `sendChatAction(typing)` 每 4 秒重送，讓使用者在 Telegram 看到「正在輸入...」直到回覆送出或錯誤發生。
-- **排版**: 使用 `cli-box` 繪製外框面板，展示啟動狀態、運行模式與離開捷徑。
+- **啟動畫面**: 使用 `cli-box` 輸出 `LazyHole-Agent` 面板，集中展示 `ONLINE`、`MODE`、`ALLOW`、`CLI`、`TRANSPORT`、`EXIT`。
+- **排版**: 啟動面板下方固定接 `Live Event Stream` 分隔線，將品牌區與執行日誌切成兩段。
 - **色彩**: 透過 `chalk` 為不同事件套用專屬色標（如 `[EXEC]`, `[DONE]`, `[FAIL]`, `[RECV]`, `[ERR!]`），提升日誌可讀性。
 - **時間戳記**: 每條日誌前綴精確到秒的時間標籤，便於追蹤事件。
 

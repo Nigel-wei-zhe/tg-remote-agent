@@ -89,7 +89,7 @@ await page.evaluate(async (data) => { ... }, kwargs);
 - `skills/blog-poster/SKILL.md`：流程重排、新增「重要限制」區塊。
 - `skills/blog-poster/resources/nigel-lee-adapter.js`：兩次修正（模板字串 + `page.evaluate` 用法）。
 - 部署位置 `/Users/nigel/.opencli/clis/nigel-lee/post-new.mjs` 同步覆蓋。
-- `src/agent/skills.js` 有永久 cache，SKILL.md 改動需重啟 `holeOpen` 才生效——本身不改，但記得。
+- `src/agent/skills.js` 有永久 cache，SKILL.md 改動需重啟 `lazyhole` 才生效——本身不改，但記得。
 
 ---
 

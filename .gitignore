@@ -20,3 +20,4 @@ skills/*
 # 開發工具
 .claude/
 .gemini/
+.codex/
