@@ -15,6 +15,7 @@ const definition = {
             type: 'object',
             properties: {
                 command: { type: 'string', description: '要執行的 shell 指令' },
+                cwd: { type: 'string', description: '可選。執行指令時使用的工作目錄；未提供則沿用 lazyhole 啟動時的工作目錄。' },
             },
             required: ['command'],
         },
@@ -45,7 +46,22 @@ function findBlockReason(command) {
     return null;
 }
 
-function run(command) {
+function resolveCwd(cwd) {
+    if (!cwd) return { ok: true, cwd: undefined };
+
+    const resolved = path.resolve(cwd);
+    try {
+        const stat = fs.statSync(resolved);
+        if (!stat.isDirectory()) {
+            return { ok: false, output: `指定的 cwd 不是目錄：${resolved}` };
+        }
+        return { ok: true, cwd: resolved };
+    } catch (err) {
+        return { ok: false, output: `指定的 cwd 不存在或無法存取：${resolved}` };
+    }
+}
+
+function run(command, options = {}) {
     const blocked = findBlockReason(command);
     if (blocked) {
         return Promise.resolve({
@@ -53,8 +69,17 @@ function run(command) {
             output: `⛔ 拒絕執行：匹配危險指令模式（${blocked}）`,
         });
     }
+
+    const cwdResult = resolveCwd(options.cwd);
+    if (!cwdResult.ok) {
+        return Promise.resolve({
+            ok: false,
+            output: cwdResult.output,
+        });
+    }
+
     return new Promise((resolve) => {
-        exec(command, { timeout: TIMEOUT_MS }, (error, stdout, stderr) => {
+        exec(command, { timeout: TIMEOUT_MS, cwd: cwdResult.cwd }, (error, stdout, stderr) => {
             let output = stdout || stderr || '（無輸出）';
             let ok = true;
             if (error) {
@@ -67,7 +92,7 @@ function run(command) {
             const truncated = output.length > MAX_OUTPUT
                 ? output.slice(0, MAX_OUTPUT) + '\n...(已截斷)'
                 : output;
-            resolve({ ok, output: truncated });
+            resolve({ ok, output: truncated, cwd: cwdResult.cwd });
         });
     });
 }

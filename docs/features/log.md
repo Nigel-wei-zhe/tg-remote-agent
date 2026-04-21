@@ -28,8 +28,8 @@ log/
 | `user.message` | 收到訊息 | chatId, userId, sender, text, route? |
 | `llm.request` | 送出 LLM 請求 | provider, model, payload |
 | `llm.response` | 收到 LLM 回應 | provider, data (完整 response) |
-| `tool.call` | Agent 呼叫工具 | name, command / url / args, round |
-| `tool.result` | 工具執行結果 | name, ok, command?/url?/skillName?, output?/length?/status?, round |
+| `tool.call` | Agent 呼叫工具 | name, command?/cwd?/url?/args, round |
+| `tool.result` | 工具執行結果 | name, ok, command?/cwd?/url?/skillName?, output?/length?/status?, round |
 | `tool.unknown` | LLM 要求了未知工具 | name, round |
 | `agent.max_rounds` | 撞 MAX_ROUNDS，觸發強制總結 | chatId |
 | `bot.reply` | 回傳給 TG 的內容 | chatId, text, phase (`llm.content` / `tool.pre` / `tool.result` / `skill.read` / `fetch.pre` / `empty` / `max_rounds.summary`), round? |

@@ -14,6 +14,7 @@
 - package.json bin 直接指向 `server.js`（shebang: `#!/usr/bin/env node`）。
 - npm 建立 symlink 後，Node.js 從真實檔案位置解析 node_modules，不需 wrapper shell script。
 - `.env` 使用 `__dirname` 絕對路徑載入，不受工作目錄影響。
+- shell 指令預設工作目錄是啟動 `lazyhole` 當下的 cwd；若 `/run` 或 `exec_shell` 指定 `cwd`，則以該目錄執行。
 
 ## 執行中快捷鍵
 - 按 q: 正常結束程序 (process.exit(0))。

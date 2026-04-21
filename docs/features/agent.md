@@ -32,12 +32,12 @@
 | 讀 skill | `📖 讀取 skill: \`<name>\`` |
 | 抓網頁 | `🌐 抓取網頁: <url>` |
 | 鎖定欄位 | `🧠 鎖定欄位: <keys>` |
-| 執行指令 | `🔧 執行中: \`<cmd>\`` |
-| 執行結果 | `💻 指令執行結果 (\`<cmd>\`):\n\`\`\`<output>\`\`\`` |
+| 執行指令 | `🔧 執行中: \`<cmd>\``；若指定目錄，下一行附 `📁 cwd: \`<path>\`` |
+| 執行結果 | `💻 指令執行結果 (\`<cmd>\`)`；若指定目錄，下一行附 `📁 cwd: \`<path>\``，再接 code block |
 
 ## Tools 規格
 
-- `exec_shell({ command })`：timeout 30 秒、輸出上限 3800 字元。`src/agent/tools/shell.js`
+- `exec_shell({ command, cwd? })`：timeout 30 秒、輸出上限 3800 字元；`cwd` 未提供時沿用 `lazyhole` 啟動目錄。`src/agent/tools/shell.js`
 - `web_fetch({ url })`：timeout 15 秒、輸出上限 8000 字元、HTML→markdown。`src/agent/tools/web_fetch.js`
 - `read_skill({ name })`：讀 `skills/<name>/SKILL.md` body；成功時 server 自動 `markActiveSkill`。`src/agent/tools/read_skill.js`
 - `remember({ fields })`：淺合併寫入 `session.locked`。`src/agent/tools/remember.js`

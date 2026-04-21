@@ -17,7 +17,7 @@ const LOCKED_PREVIEW_CHARS = 300;
 const BASE_SYSTEM_PROMPT = `你是一個部署在伺服器上的 Telegram AI 助理。
 
 工具使用原則：
-- exec_shell：執行 shell 指令。執行後不會再有回合給你總結，請一次下對指令。
+- exec_shell：執行 shell 指令。執行後不會再有回合給你總結，請一次下對指令。若使用者指定專案或資料夾，優先用 cwd 參數，不要把 cd 寫進 command。
 - web_fetch：抓取並閱讀網頁內容，適合做研究、查資料、閱讀文章。可連續呼叫多次。
 - read_skill：讀取 skill 完整說明。system prompt 列出 skill 時，使用者意圖相關就先 read_skill。
 - remember：把用戶已確認、要跨輪保留的結構化欄位寫入 session.locked（如已審過的標題、完稿）。一般對話脈絡 server 會自動記錄，不需手動存。
@@ -180,18 +180,23 @@ async function handleEndSession({ chatId, call, round, messages }) {
 
 async function handleExecShell({ chatId, call, args, round }) {
     const command = args.command || '';
-    console.log(`${timestamp()} ${chalk.bgYellow.black(' TOOL ')} ${chalk.yellow(command)}`);
-    logOp('tool.call', { name: 'exec_shell', command, round });
+    const cwd = args.cwd || '';
+    const location = cwd ? ` @ ${cwd}` : '';
+    console.log(`${timestamp()} ${chalk.bgYellow.black(' TOOL ')} ${chalk.yellow(command)}${chalk.dim(location)}`);
+    logOp('tool.call', { name: 'exec_shell', command, cwd: cwd || undefined, round });
 
-    const pre = `🔧 執行中: \`${command}\``;
+    const pre = cwd
+        ? `🔧 執行中: \`${command}\`\n📁 cwd: \`${cwd}\``
+        : `🔧 執行中: \`${command}\``;
     await sendMessage(chatId, pre);
     logOp('bot.reply', { chatId, text: pre, phase: 'tool.pre', round });
 
-    const { ok, output } = await shell.run(command);
-    logOp('tool.result', { name: 'exec_shell', command, ok, output, round });
+    const { ok, output, cwd: resolvedCwd } = await shell.run(command, { cwd });
+    logOp('tool.result', { name: 'exec_shell', command, cwd: resolvedCwd || cwd || undefined, ok, output, round });
 
     const header = ok ? '💻 指令執行結果' : '⚠️ 指令執行失敗';
-    const body = `${header} (\`${command}\`):\n\`\`\`\n${output}\n\`\`\``;
+    const cwdLine = resolvedCwd ? `\n📁 cwd: \`${resolvedCwd}\`` : '';
+    const body = `${header} (\`${command}\`)${cwdLine}\n\`\`\`\n${output}\n\`\`\``;
     await sendMessage(chatId, body);
     logOp('bot.reply', { chatId, text: body, phase: 'tool.result', round });
 }
