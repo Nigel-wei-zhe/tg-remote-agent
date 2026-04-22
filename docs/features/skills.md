@@ -31,12 +31,14 @@ description: <一句話>       # 會塞進 system prompt，精簡
 2. tools 陣列有 skills 時才加入 `read_skill`。
 3. **混合策略**：
    - `read_skill` 呼叫 → 把 body 以 `role: tool` 推回 messages，**繼續下一輪 LLM**。
+   - `write_file` 呼叫 → 直接寫檔後推回 messages，**繼續下一輪 LLM**（長內容落地用）。
    - `exec_shell` 呼叫 → 執行並回結果，**立刻終止**（Option A）。
 4. 上限 `MAX_ROUNDS = 5`，超過回覆中止訊息。
 
 ## Tool 定義
 - `read_skill(name: string)`：回傳該 skill 完整 body，或錯誤訊息（skill 不存在時）。
 - 實作：`src/agent/tools/read_skill.js`。
+ - `write_file({ path, content, cwd? })`：直接寫文字檔，適合長內容落地；實作：`src/agent/tools/write_file.js`。
 
 ## 使用者可見流程
 讀 skill 時會收到 `📖 讀取 skill: <name>`；接著 LLM 若呼叫 exec_shell 則照常顯示 `🔧 執行中` 與結果。

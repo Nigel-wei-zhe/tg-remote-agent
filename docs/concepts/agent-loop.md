@@ -5,6 +5,7 @@
 ## 先說結論
 
 - **讀資料的工具**（`read_skill`、`web_fetch`）→ 拿到結果後**再 call LLM**，讓它決定下一步。
+- **寫入類工具**（`write_file`）→ 寫入後**再 call LLM**，讓它收尾或決定下一步。
 - **執行動作的工具**（`exec_shell`）→ 拿到結果後**直接給使用者**，不再 call LLM（節省時間與成本）。
 - 整個互動最多 5 輪 LLM，避免失控。
 
@@ -121,7 +122,7 @@ flowchart TD
 
 | 類別 | 工具 | 特性 | 呼叫後行為 |
 |------|------|------|-----------|
-| 讀取類 | `read_skill`、`web_fetch` | 拿資料，沒有副作用 | 結果塞回 messages，**繼續下一輪 LLM** |
+| 讀取/寫入類 | `read_skill`、`web_fetch`、`write_file` | 拿資料或落檔，非 shell | 結果塞回 messages，**繼續下一輪 LLM** |
 | 執行類 | `exec_shell` | 會動到系統、使用者要的是輸出本身 | 結果直接給使用者，**立刻終止** |
 
 這樣的好處：
@@ -181,7 +182,7 @@ Option B 的代價是：每個 shell 指令都會被 LLM 多轉一次。對 90% 
 ## 這個專案目前的決策
 
 ```
-讀取類 (read_skill, web_fetch) → 多輪
+讀取/寫入類 (read_skill, web_fetch, write_file) → 多輪
 執行類 (exec_shell)           → 單輪終止
 MAX_ROUNDS = 5
 ```

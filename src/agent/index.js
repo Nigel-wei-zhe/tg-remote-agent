@@ -1,6 +1,7 @@
 const chalk = require('chalk');
 const llm = require('../llm');
 const shell = require('./tools/shell');
+const writeFile = require('./tools/write_file');
 const readSkill = require('./tools/read_skill');
 const webFetch = require('./tools/web_fetch');
 const remember = require('./tools/remember');
@@ -19,6 +20,7 @@ const BASE_SYSTEM_PROMPT = `你是一個部署在伺服器上的 Telegram AI 助
 
 工具使用原則：
 - exec_shell：執行 shell 指令。執行後不會再有回合給你總結，請一次下對指令。若使用者指定專案或資料夾，優先用 cwd 參數，不要把 cd 寫進 command。
+- write_file：直接寫文字檔，適合 markdown、json、程式碼、設定檔等已知內容；長內容寫檔優先用這個，不要把整段內容塞進 exec_shell heredoc。
 - web_fetch：抓取並閱讀網頁內容，適合做研究、查資料、閱讀文章。可連續呼叫多次。
 - read_skill：讀取 skill 完整說明。system prompt 列出 skill 時，使用者意圖相關就先 read_skill。
 - remember：把用戶已確認、要跨輪保留的結構化欄位寫入 session.locked（如已審過的標題、完稿）。一般對話脈絡 server 會自動記錄，不需手動存。
@@ -28,7 +30,7 @@ const BASE_SYSTEM_PROMPT = `你是一個部署在伺服器上的 Telegram AI 助
 - 若 system prompt 含「[對話狀態]」區塊，代表本輪是既有任務延續。優先把用戶訊息理解為對該狀態的回應（同意／修改／取消），而不是全新請求。
 
 回合規則：
-- web_fetch、read_skill、remember、end_session 屬於讀取類工具，呼叫後會給你下一輪繼續決策。
+- web_fetch、read_skill、remember、end_session、write_file 屬於讀取/寫入類工具，呼叫後會給你下一輪繼續決策。
 - exec_shell 屬於執行類工具，呼叫後會立刻把結果給使用者並結束本次任務。
 - 純聊天、解釋概念、無需伺服器狀態時，直接用文字回答即可。
 
@@ -52,6 +54,7 @@ async function handle(chatId, text, sender, userId) {
         const systemPrompt = BASE_SYSTEM_PROMPT + skills.indexText() + renderSessionPrompt(session);
         const tools = [
             shell.definition,
+            writeFile.definition,
             webFetch.definition,
             remember.definition,
             endSession.definition,
@@ -96,6 +99,8 @@ async function handle(chatId, text, sender, userId) {
 
                 if (name === 'read_skill') {
                     await handleReadSkill({ chatId, call, args, round, messages });
+                } else if (name === 'write_file') {
+                    await handleWriteFile({ chatId, call, args, round, messages });
                 } else if (name === 'web_fetch') {
                     await handleWebFetch({ chatId, call, args, round, messages });
                 } else if (name === 'remember') {
@@ -155,6 +160,38 @@ async function handleWebFetch({ chatId, call, args, round, messages }) {
     const { ok, text, status } = await webFetch.run(url);
     logOp('tool.result', { name: 'web_fetch', url, ok, status, length: text.length, round });
     messages.push({ role: 'tool', tool_call_id: call.id, content: text });
+}
+
+async function handleWriteFile({ chatId, call, args, round, messages }) {
+    const targetPath = args.path || '';
+    const cwd = args.cwd || '';
+    const content = args.content || '';
+    const location = cwd ? ` @ ${cwd}` : '';
+    console.log(`${timestamp()} ${chalk.bgGreen.black(' WRITE ')} ${chalk.green(targetPath)}${chalk.dim(location)}`);
+    logOp('tool.call', {
+        name: 'write_file',
+        path: targetPath,
+        cwd: cwd || undefined,
+        contentLength: content.length,
+        round,
+    });
+
+    const pre = cwd
+        ? `📝 寫入檔案: \`${targetPath}\`\n📁 cwd: \`${cwd}\``
+        : `📝 寫入檔案: \`${targetPath}\``;
+    await sendMessage(chatId, pre);
+    logOp('bot.reply', { chatId, text: pre, phase: 'write.pre', round });
+
+    const { ok, body, path, bytes } = writeFile.run(targetPath, content, { cwd });
+    logOp('tool.result', {
+        name: 'write_file',
+        path: path || targetPath,
+        cwd: cwd || undefined,
+        ok,
+        bytes,
+        round,
+    });
+    messages.push({ role: 'tool', tool_call_id: call.id, content: body });
 }
 
 async function handleRemember({ chatId, call, args, round, messages }) {

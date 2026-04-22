@@ -29,11 +29,11 @@ log/
 | `llm.request` | 送出 LLM 請求 | provider, model, payload |
 | `llm.retry` | MiniMax 可恢復錯誤退避後重試 | provider, requestName, attempt, nextAttempt, delayMs, reason, statusCode? |
 | `llm.response` | 收到 LLM 回應 | provider, data (完整 response) |
-| `tool.call` | Agent 呼叫工具 | name, command?/cwd?/url?/args, round |
-| `tool.result` | 工具執行結果 | name, ok, command?/cwd?/url?/skillName?, output?/length?/status?, round |
+| `tool.call` | Agent 呼叫工具 | name, command?/path?/cwd?/url?/args?/contentLength?, round |
+| `tool.result` | 工具執行結果 | name, ok, command?/path?/cwd?/url?/skillName?, output?/length?/status?/bytes?, round |
 | `tool.unknown` | LLM 要求了未知工具 | name, round |
 | `agent.max_rounds` | 撞 MAX_ROUNDS，觸發強制總結 | chatId |
-| `bot.reply` | 回傳給 TG 的內容 | chatId, text, phase (`llm.content` / `tool.pre` / `tool.result` / `skill.read` / `fetch.pre` / `empty` / `max_rounds.summary`), round? |
+| `bot.reply` | 回傳給 TG 的內容 | chatId, text, phase (`llm.content` / `tool.pre` / `tool.result` / `skill.read` / `fetch.pre` / `write.pre` / `empty` / `max_rounds.summary`), round? |
 
 ## 注意
 - operation log 包含 LLM 完整對話與 shell 輸出，可能含敏感資訊。

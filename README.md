@@ -17,6 +17,7 @@ LLM_PROVIDER=minimax          # 可選
 MINIMAX_RETRY_MAX_ATTEMPTS=4  # 可選，總嘗試次數
 MINIMAX_RETRY_BASE_MS=1500    # 可選，初始退避毫秒
 MINIMAX_RETRY_MAX_MS=12000    # 可選，單次退避上限毫秒
+WRITE_FILE_MAX_BYTES=512000   # 可選，write_file 內容上限（bytes）
 ```
 
 缺 `TELEGRAM_TOKEN` 或 `TELEGRAM_ALLOWED_USER_ID` 會直接退出。
@@ -36,7 +37,7 @@ lazyhole
 
 | 輸入                          | 行為                                                                                                                      |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 任意自然語言                  | 進 AI agent，LLM 自行判斷用哪個工具（`exec_shell` / `web_fetch` / `read_skill` / `remember` / `end_session`）或純文字回覆 |
+| 任意自然語言                  | 進 AI agent，LLM 自行判斷用哪個工具（`exec_shell` / `write_file` / `web_fetch` / `read_skill` / `remember` / `end_session`）或純文字回覆 |
 | `/run <指令>`                 | 直通 shell，不經 LLM（除錯／強制執行的逃生口）；查詢型回傳輸出，寫檔型成功時只回完成與存放位置                          |
 | `/run --cwd <路徑> -- <指令>` | 在指定工作目錄執行直通 shell；`<路徑>` 含空白時請加引號                                                                   |
 | `/memory`                     | 顯示當前 chatId 的短期記憶 session JSON；`/memory clear` 清除                                                             |
@@ -74,6 +75,7 @@ lazyhole
 | 工具          | 用途                                               | 執行後                  |
 | ------------- | -------------------------------------------------- | ----------------------- |
 | `exec_shell`  | 伺服器執行 shell 指令，可選 `cwd`                  | 結果直接給使用者，結束  |
+| `write_file`  | 直接寫文字檔（markdown/json/程式碼），可選 `cwd`   | 結果塞回 LLM 繼續下一輪 |
 | `web_fetch`   | 抓網頁（HTML→markdown）                            | 結果塞回 LLM 繼續下一輪 |
 | `read_skill`  | 讀 skill 完整說明                                  | 結果塞回 LLM 繼續下一輪 |
 | `remember`    | 鎖定結構化欄位到 session.locked（多階段 skill 用） | 結果塞回 LLM 繼續下一輪 |

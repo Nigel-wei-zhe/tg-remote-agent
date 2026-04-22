@@ -10,11 +10,17 @@
 - `MINIMAX_API_KEY`: LLM API key。
 缺任一啟動時直接退出。
 
+## 可選環境變數
+- `MINIMAX_MODEL`: MiniMax model id。
+- `LLM_PROVIDER`: LLM provider（預設 minimax）。
+- `MINIMAX_RETRY_MAX_ATTEMPTS` / `MINIMAX_RETRY_BASE_MS` / `MINIMAX_RETRY_MAX_MS`: MiniMax overload/rate-limit 重試參數。
+- `WRITE_FILE_MAX_BYTES`: `write_file` 單次寫入內容大小上限（bytes）。
+
 ## bin 設定
 - package.json bin 直接指向 `server.js`（shebang: `#!/usr/bin/env node`）。
 - npm 建立 symlink 後，Node.js 從真實檔案位置解析 node_modules，不需 wrapper shell script。
 - `.env` 使用 `__dirname` 絕對路徑載入，不受工作目錄影響。
-- shell 指令預設工作目錄是啟動 `lazyhole` 當下的 cwd；若 `/run` 或 `exec_shell` 指定 `cwd`，則以該目錄執行。
+- shell 指令預設工作目錄是啟動 `lazyhole` 當下的 cwd；若 `/run`、`exec_shell`、`write_file` 指定 `cwd`，則以該目錄解析相對路徑並執行。
 
 ## 執行中快捷鍵
 - 按 q: 正常結束程序 (process.exit(0))。
