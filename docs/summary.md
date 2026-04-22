@@ -25,7 +25,7 @@
 - [**部署與環境**](./features/deployment.md): 環境變數與全域指令安裝。
 - [**UI/UX 呈現**](./features/ui.md): 伺服器終端機輸出美化。
 - [**日誌系統**](./features/log.md): Operation 與 Error 日誌結構。
-- [**LLM 整合**](./features/llm.md): MiniMax API 參數與 Provider 配置。
+- [**LLM 整合**](./features/llm.md): MiniMax API 參數、Streaming 與 overload retry/backoff 配置。
 - [**安全性控管**](./features/whitelist.md): 單一用戶白名單鎖定機制。
 - [**指令安全守門**](./features/safety.md): `setting.json` 黑名單正則過濾危險 shell 指令。
 

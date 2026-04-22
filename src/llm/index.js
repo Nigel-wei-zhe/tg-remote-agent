@@ -1,9 +1,12 @@
 const minimax = require('./providers/minimax');
 
-async function chat(args) {
+function getProvider() {
     const provider = process.env.LLM_PROVIDER || 'minimax';
-    if (provider === 'minimax') return minimax.chat(args);
+    if (provider === 'minimax') return minimax;
     throw new Error(`未知的 LLM provider: ${provider}`);
 }
 
-module.exports = { chat };
+async function chat(args) { return getProvider().chat(args); }
+async function chatStream(args, onToken) { return getProvider().chatStream(args, onToken); }
+
+module.exports = { chat, chatStream };

@@ -27,6 +27,7 @@ log/
 | `auth.blocked` | 白名單未通過 | userId, sender, chatId, text |
 | `user.message` | 收到訊息 | chatId, userId, sender, text, route? |
 | `llm.request` | 送出 LLM 請求 | provider, model, payload |
+| `llm.retry` | MiniMax 可恢復錯誤退避後重試 | provider, requestName, attempt, nextAttempt, delayMs, reason, statusCode? |
 | `llm.response` | 收到 LLM 回應 | provider, data (完整 response) |
 | `tool.call` | Agent 呼叫工具 | name, command?/cwd?/url?/args, round |
 | `tool.result` | 工具執行結果 | name, ok, command?/cwd?/url?/skillName?, output?/length?/status?, round |

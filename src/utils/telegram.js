@@ -3,11 +3,11 @@ const chalk = require('chalk');
 const { logError } = require('./logger');
 
 const timestamp = () => chalk.gray(`[${new Date().toLocaleTimeString()}]`);
+const TG_BASE = () => `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`;
 
 async function sendMessage(chatId, text) {
-    const token = process.env.TELEGRAM_TOKEN;
     try {
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+        await axios.post(`${TG_BASE()}/sendMessage`, {
             chat_id: chatId,
             text,
             parse_mode: 'Markdown'
@@ -20,8 +20,7 @@ async function sendMessage(chatId, text) {
 }
 
 function startTyping(chatId) {
-    const token = process.env.TELEGRAM_TOKEN;
-    const send = () => axios.post(`https://api.telegram.org/bot${token}/sendChatAction`, {
+    const send = () => axios.post(`${TG_BASE()}/sendChatAction`, {
         chat_id: chatId,
         action: 'typing'
     }).catch(() => {});
@@ -31,4 +30,44 @@ function startTyping(chatId) {
     return () => clearInterval(interval);
 }
 
-module.exports = { sendMessage, startTyping };
+// 逐字串流：每 700ms 或 finalize 時 edit 一次訊息
+function createStreamer(chatId) {
+    let messageId = null;
+    let buffer = '';
+    let dirty = false;
+    let flushing = false;
+
+    const flush = async (isFinal = false) => {
+        if (!dirty || flushing || !buffer) return;
+        flushing = true;
+        const text = buffer + (isFinal ? '' : ' ▌');
+        try {
+            if (!messageId) {
+                const res = await axios.post(`${TG_BASE()}/sendMessage`, { chat_id: chatId, text });
+                messageId = res.data?.result?.message_id;
+            } else {
+                await axios.post(`${TG_BASE()}/editMessageText`, {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    text,
+                });
+            }
+            dirty = false;
+        } catch { /* ignore rate-limit or "not modified" errors */ }
+        flushing = false;
+    };
+
+    const interval = setInterval(() => flush(false), 700);
+
+    return {
+        onToken: (chunk) => { buffer += chunk; dirty = true; },
+        finalize: async () => {
+            clearInterval(interval);
+            if (buffer) { dirty = true; await flush(true); }
+            return buffer;
+        },
+        discard: () => { clearInterval(interval); },
+    };
+}
+
+module.exports = { sendMessage, startTyping, createStreamer };

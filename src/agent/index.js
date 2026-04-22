@@ -7,7 +7,7 @@ const remember = require('./tools/remember');
 const endSession = require('./tools/end_session');
 const skills = require('./skills');
 const sessionStore = require('../utils/session');
-const { sendMessage, startTyping } = require('../utils/telegram');
+const { sendMessage, startTyping, createStreamer } = require('../utils/telegram');
 const { logError, logOp } = require('../utils/logger');
 
 const timestamp = () => chalk.gray(`[${new Date().toLocaleTimeString()}]`);
@@ -63,18 +63,20 @@ async function handle(chatId, text, sender, userId) {
         ];
 
         for (let round = 1; round <= MAX_ROUNDS; round++) {
-            const reply = await llm.chat({ messages, tools });
+            const streamer = createStreamer(chatId);
+            const reply = await llm.chatStream({ messages, tools }, streamer.onToken);
             messages.push(reply);
 
             const content = (reply.content || '').trim();
             const toolCalls = reply.tool_calls || [];
 
             if (content) {
-                const narration = toolCalls.length > 0 ? `💬 ${content}` : content;
-                await sendMessage(chatId, narration);
-                logOp('bot.reply', { chatId, text: narration, phase: 'llm.content', round });
+                await streamer.finalize();
+                logOp('bot.reply', { chatId, text: content, phase: 'llm.content', round });
                 console.log(`${timestamp()} ${chalk.bgGreen.black(' SAY ')} ${chalk.dim(content.slice(0, 60))}`);
                 sessionStore.appendHistory(chatId, 'assistant', content);
+            } else {
+                streamer.discard();
             }
 
             if (toolCalls.length === 0) {
@@ -210,13 +212,17 @@ async function forceFinalSummary({ chatId, messages, tools }) {
         content: `[系統提示] 已達互動上限 ${MAX_ROUNDS} 輪，禁止再呼叫任何工具。請根據目前已蒐集的資料，直接用繁體中文文字回覆。若資料不足以完整回答，也請誠實說明並給出目前能給的最佳回覆。`,
     });
 
-    const finalReply = await llm.chat({ messages, tools, toolChoice: 'none' });
+    await sendMessage(chatId, `⚠️ 已達互動上限，整理回覆中…`);
+    const streamer = createStreamer(chatId);
+    const finalReply = await llm.chatStream({ messages, tools, toolChoice: 'none' }, streamer.onToken);
     const content = (finalReply.content || '').trim();
-    const body = content
-        ? `⚠️ 已達互動上限，以下為根據現有資料整理的回覆：\n\n${content}`
-        : `⚠️ 已達互動上限 ${MAX_ROUNDS}，且無法從現有資料產出總結。`;
-    await sendMessage(chatId, body);
-    logOp('bot.reply', { chatId, text: body, phase: 'max_rounds.summary' });
+    if (content) {
+        await streamer.finalize();
+    } else {
+        streamer.discard();
+        await sendMessage(chatId, `⚠️ 已達互動上限 ${MAX_ROUNDS}，且無法從現有資料產出總結。`);
+    }
+    logOp('bot.reply', { chatId, text: content, phase: 'max_rounds.summary' });
     if (content) sessionStore.appendHistory(chatId, 'assistant', content);
 }
 
