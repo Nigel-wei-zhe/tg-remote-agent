@@ -17,10 +17,10 @@
 - `skills/`: 外部注入的靜態能力文件 (`<name>/SKILL.md`)。
 
 ## 功能索引 (L2 Details)
-- [**AI Agent 核心**](./features/agent.md): 決策循環與內建工具 (shell/fetch，shell 支援 cwd)。
+- [**AI Agent 核心**](./features/agent.md): 決策循環與內建工具 (shell/fetch，shell 支援 cwd；寫檔成功回精簡完成訊息)。
 - [**Skills 擴展**](./features/skills.md): 自定義技能的載入與解析規範。
 - [**短期記憶 (Session)**](./features/session-memory.md): 跨輪對話狀態、`remember` / `end_session` 工具、`/memory` 指令。
-- [**遠端指令 (Direct)**](./features/remote-exec.md): 繞過 Agent 直接執行的 `/run` 邏輯，支援指定 cwd。
+- [**遠端指令 (Direct)**](./features/remote-exec.md): 繞過 Agent 直接執行的 `/run` 邏輯，支援指定 cwd；寫檔類成功時回傳存放位置。
 - [**輪詢與通訊**](./features/polling.md): Telegram Long Polling 實作細節。
 - [**部署與環境**](./features/deployment.md): 環境變數與全域指令安裝。
 - [**UI/UX 呈現**](./features/ui.md): 伺服器終端機輸出美化。

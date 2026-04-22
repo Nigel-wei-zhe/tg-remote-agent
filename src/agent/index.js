@@ -8,6 +8,7 @@ const endSession = require('./tools/end_session');
 const skills = require('./skills');
 const sessionStore = require('../utils/session');
 const { sendMessage, startTyping, createStreamer } = require('../utils/telegram');
+const { formatCommandSuccess } = require('../utils/command-result');
 const { logError, logOp } = require('../utils/logger');
 
 const timestamp = () => chalk.gray(`[${new Date().toLocaleTimeString()}]`);
@@ -196,9 +197,9 @@ async function handleExecShell({ chatId, call, args, round }) {
     const { ok, output, cwd: resolvedCwd } = await shell.run(command, { cwd });
     logOp('tool.result', { name: 'exec_shell', command, cwd: resolvedCwd || cwd || undefined, ok, output, round });
 
-    const header = ok ? '💻 指令執行結果' : '⚠️ 指令執行失敗';
-    const cwdLine = resolvedCwd ? `\n📁 cwd: \`${resolvedCwd}\`` : '';
-    const body = `${header} (\`${command}\`)${cwdLine}\n\`\`\`\n${output}\n\`\`\``;
+    const body = ok
+        ? formatCommandSuccess({ command, cwd: resolvedCwd || cwd, output })
+        : `⚠️ 指令執行失敗\n\`\`\`\n${output}\n\`\`\``;
     await sendMessage(chatId, body);
     logOp('bot.reply', { chatId, text: body, phase: 'tool.result', round });
 }

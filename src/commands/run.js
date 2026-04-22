@@ -1,6 +1,7 @@
 const chalk = require('chalk');
 const shell = require('../agent/tools/shell');
 const { sendMessage, startTyping } = require('../utils/telegram');
+const { formatCommandSuccess } = require('../utils/command-result');
 const { logError, logOp } = require('../utils/logger');
 
 const timestamp = () => chalk.gray(`[${new Date().toLocaleTimeString()}]`);
@@ -56,8 +57,9 @@ async function handle(chatId, text, sender, userId) {
     } else {
         console.log(`${timestamp()} ${chalk.bgGreen.black(' OK  ')} ${chalk.dim(output.split('\n')[0].slice(0, 60))}`);
     }
-    const cwdLine = resolvedCwd ? `\n📁 cwd: \`${resolvedCwd}\`` : '';
-    const reply = `💻 指令執行結果${cwdLine}\n\`\`\`\n${output}\n\`\`\``;
+    const reply = ok
+        ? formatCommandSuccess({ command, cwd: resolvedCwd || cwd, output })
+        : `⚠️ 指令執行失敗\n\`\`\`\n${output}\n\`\`\``;
     await sendMessage(chatId, reply);
     logOp('bot.reply', { chatId, text: reply, route: 'run' });
 }

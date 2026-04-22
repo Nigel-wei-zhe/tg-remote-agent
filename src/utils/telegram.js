@@ -5,6 +5,10 @@ const { logError } = require('./logger');
 const timestamp = () => chalk.gray(`[${new Date().toLocaleTimeString()}]`);
 const TG_BASE = () => `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`;
 
+function isEntityParseError(reason) {
+    return typeof reason === 'string' && reason.includes(`can't parse entities`);
+}
+
 async function sendMessage(chatId, text) {
     try {
         await axios.post(`${TG_BASE()}/sendMessage`, {
@@ -14,6 +18,21 @@ async function sendMessage(chatId, text) {
         });
     } catch (err) {
         const reason = err.response ? err.response.data.description : err.message;
+        if (isEntityParseError(reason)) {
+            try {
+                await axios.post(`${TG_BASE()}/sendMessage`, {
+                    chat_id: chatId,
+                    text,
+                });
+                return;
+            } catch (fallbackErr) {
+                const fallbackReason = fallbackErr.response ? fallbackErr.response.data.description : fallbackErr.message;
+                console.error(`${timestamp()} ${chalk.bgRed.white(' ERR ')} ${chalk.red('發送失敗: ' + fallbackReason)}`);
+                logError('SEND', `${reason} | fallback: ${fallbackReason}`);
+                return;
+            }
+        }
+
         console.error(`${timestamp()} ${chalk.bgRed.white(' ERR ')} ${chalk.red('發送失敗: ' + reason)}`);
         logError('SEND', reason);
     }

@@ -37,4 +37,5 @@ log/
 
 ## 注意
 - operation log 包含 LLM 完整對話與 shell 輸出，可能含敏感資訊。
+- Telegram 發送若遇到 Markdown entity 解析錯誤，會退回純文字重送一次。
 - 目前不做 rotation，膨脹過快再加。
