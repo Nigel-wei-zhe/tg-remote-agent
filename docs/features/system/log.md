@@ -16,7 +16,7 @@ log/
 ```
 [14:32:01] [RUN:rm -rf /] Permission denied
 ```
-來源：`POLL`、`SEND`、`AGENT`、`RUN:<cmd>`。
+來源：`POLL`、`SEND`、`AGENT`、`RUN:<cmd>`、`TG_EDIT_FINAL`、`TG_EDIT_FINAL_RETRY`。
 
 ## Operation log 格式 (JSONL)
 每行一個 JSON，欄位 `{ ts, event, ...data }`。
