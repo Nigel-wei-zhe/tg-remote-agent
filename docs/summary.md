@@ -10,7 +10,7 @@
 - **數據流**: Telegram → server.js (路由) → Agent Loop (決策) → Tools (執行) → Telegram。
 
 ## 模組職責 (Module Roles)
-- `src/agent/`: 核心決策邏輯、工具集定義 (`tools/`，含 shell / write_file / read_file / web_fetch / read_skill / remember / end_session)、Skills 載入。
+- `src/agent/`: 核心決策邏輯、工具集定義 (`tools/`，含 shell / write_file / read_file / web_fetch / read_skill / remember / end_session)、Skills 載入、System Prompt (`system-prompt.js`)。
 - `src/llm/`: LLM Provider 抽象層，負責請求封裝與錯誤處理。
 - `src/utils/`: 基礎設施，包含 JSONL 日誌 (`logger.js`)、Telegram API 封裝、短期記憶 (`session.js`)。
 - `src/commands/`: 非 AI 決策的直通指令 (`/run`、`/memory`)。
