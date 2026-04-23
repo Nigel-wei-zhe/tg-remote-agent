@@ -182,11 +182,20 @@ Option B 的代價是：每個 shell 指令都會被 LLM 多轉一次。對 90% 
 ## 這個專案目前的決策
 
 ```
-讀取/寫入類 (read_skill, web_fetch, write_file) → 多輪
-執行類 (exec_shell)           → 單輪終止
+讀取/寫入類 (read_skill, web_fetch, write_file, read_file) → 多輪
+執行類 (exec_shell)                                        → 預設單輪終止
+執行類 opt-in (exec_shell + followup:true)                 → 多輪
 MAX_ROUNDS = 5
 ```
 
-實作位置：`src/agent/index.js`，在 handleReadSkill / handleWebFetch / handleExecShell 三個函式裡分別處理。
+實作位置：`src/agent/index.js`，在 handleReadSkill / handleWebFetch / handleExecShell 等函式裡分別處理。`exec_shell` 的 `followup` 旗標由 LLM 依任務性質自行決定。
 
 如果未來新增工具，依這個表判斷歸哪一類、照既有 pattern 實作即可。
+
+## 延伸決策：exec_shell 的 followup 旗標（2026-04-23）
+
+原本設計是「exec_shell 永遠單輪終止」，但實務發現多步驟任務（例如「建一個完整 demo 專案」）會在第一個 shell 指令就被切斷。折衷方案是在 `exec_shell` 加 `followup:boolean` 參數，預設 false 維持原行為；LLM 判斷這次只是多步驟的其中一步、後面還要根據結果動作時才帶 true。好處：
+
+- 不動 90% 單次查詢/動作的 UX（沒有多餘 LLM 總結、沒有多花 token）。
+- 把選擇權給 LLM，而不是全域切換。
+- 可觀察期：累積日誌判斷 LLM 用得合不合理，再決定要不要擴大為預設或收回。

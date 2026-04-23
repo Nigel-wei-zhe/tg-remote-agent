@@ -2,6 +2,7 @@ const chalk = require('chalk');
 const llm = require('../llm');
 const shell = require('./tools/shell');
 const writeFile = require('./tools/write_file');
+const readFile = require('./tools/read_file');
 const readSkill = require('./tools/read_skill');
 const webFetch = require('./tools/web_fetch');
 const remember = require('./tools/remember');
@@ -19,8 +20,9 @@ const LOCKED_PREVIEW_CHARS = 300;
 const BASE_SYSTEM_PROMPT = `你是一個部署在伺服器上的 Telegram AI 助理。
 
 工具使用原則：
-- exec_shell：執行 shell 指令。執行後不會再有回合給你總結，請一次下對指令。若使用者指定專案或資料夾，優先用 cwd 參數，不要把 cd 寫進 command。
+- exec_shell：執行 shell 指令。預設單輪終止（拿到結果就結束），適合一次就搞定的查詢/動作，請一次下對指令。若這個指令只是多步驟流程的其中一步，之後還要根據結果決定下一步（ex: 先探路再動作、連續建檔後還要回覆說明），帶 followup:true 讓結果回到你手上繼續下一輪。若使用者指定專案或資料夾，優先用 cwd 參數，不要把 cd 寫進 command。
 - write_file：直接寫文字檔，適合 markdown、json、程式碼、設定檔等已知內容；長內容寫檔優先用這個，不要把整段內容塞進 exec_shell heredoc。
+- read_file：讀本地文字檔給你分析/引用，會附上行號與總行數。長檔用 offset/limit 分段讀；需要檢視檔案內容時優先用這個，不要用 exec_shell 的 cat/head/tail。
 - web_fetch：抓取並閱讀網頁內容，適合做研究、查資料、閱讀文章。可連續呼叫多次。
 - read_skill：讀取 skill 完整說明。system prompt 列出 skill 時，使用者意圖相關就先 read_skill。
 - remember：把用戶已確認、要跨輪保留的結構化欄位寫入 session.locked（如已審過的標題、完稿）。一般對話脈絡 server 會自動記錄，不需手動存。
@@ -30,8 +32,8 @@ const BASE_SYSTEM_PROMPT = `你是一個部署在伺服器上的 Telegram AI 助
 - 若 system prompt 含「[對話狀態]」區塊，代表本輪是既有任務延續。優先把用戶訊息理解為對該狀態的回應（同意／修改／取消），而不是全新請求。
 
 回合規則：
-- web_fetch、read_skill、remember、end_session、write_file 屬於讀取/寫入類工具，呼叫後會給你下一輪繼續決策。
-- exec_shell 屬於執行類工具，呼叫後會立刻把結果給使用者並結束本次任務。
+- read_file、web_fetch、read_skill、remember、end_session、write_file 屬於讀取/寫入類工具，呼叫後會給你下一輪繼續決策。
+- exec_shell 屬於執行類工具，預設呼叫後會立刻把結果給使用者並結束本次任務；帶 followup:true 時改為塞回結果、續跑下一輪。
 - 純聊天、解釋概念、無需伺服器狀態時，直接用文字回答即可。
 
 預算限制（重要）：
@@ -55,6 +57,7 @@ async function handle(chatId, text, sender, userId) {
         const tools = [
             shell.definition,
             writeFile.definition,
+            readFile.definition,
             webFetch.definition,
             remember.definition,
             endSession.definition,
@@ -101,6 +104,8 @@ async function handle(chatId, text, sender, userId) {
                     await handleReadSkill({ chatId, call, args, round, messages });
                 } else if (name === 'write_file') {
                     await handleWriteFile({ chatId, call, args, round, messages });
+                } else if (name === 'read_file') {
+                    await handleReadFile({ chatId, call, args, round, messages });
                 } else if (name === 'web_fetch') {
                     await handleWebFetch({ chatId, call, args, round, messages });
                 } else if (name === 'remember') {
@@ -108,8 +113,9 @@ async function handle(chatId, text, sender, userId) {
                 } else if (name === 'end_session') {
                     await handleEndSession({ chatId, call, round, messages });
                 } else if (name === 'exec_shell') {
-                    await handleExecShell({ chatId, call, args, round });
-                    shouldTerminate = true;
+                    const followup = args.followup === true;
+                    await handleExecShell({ chatId, call, args, round, messages, followup });
+                    if (!followup) shouldTerminate = true;
                 } else {
                     logOp('tool.unknown', { name, round });
                     messages.push({
@@ -194,6 +200,35 @@ async function handleWriteFile({ chatId, call, args, round, messages }) {
     messages.push({ role: 'tool', tool_call_id: call.id, content: body });
 }
 
+async function handleReadFile({ chatId, call, args, round, messages }) {
+    const targetPath = args.path || '';
+    const cwd = args.cwd || '';
+    const offset = args.offset;
+    const limit = args.limit;
+    const location = cwd ? ` @ ${cwd}` : '';
+    console.log(`${timestamp()} ${chalk.bgCyan.black(' READ ')} ${chalk.cyan(targetPath)}${chalk.dim(location)}`);
+    logOp('tool.call', { name: 'read_file', path: targetPath, cwd: cwd || undefined, offset, limit, round });
+
+    const rangeHint = offset || limit ? ` (offset=${offset || 1}, limit=${limit || '預設'})` : '';
+    const pre = cwd
+        ? `📄 讀取檔案: \`${targetPath}\`${rangeHint}\n📁 cwd: \`${cwd}\``
+        : `📄 讀取檔案: \`${targetPath}\`${rangeHint}`;
+    await sendMessage(chatId, pre);
+    logOp('bot.reply', { chatId, text: pre, phase: 'read.pre', round });
+
+    const { ok, body, path: resolvedPath, totalLines, bytes } = readFile.run(targetPath, { cwd, offset, limit });
+    logOp('tool.result', {
+        name: 'read_file',
+        path: resolvedPath || targetPath,
+        cwd: cwd || undefined,
+        ok,
+        totalLines,
+        bytes,
+        round,
+    });
+    messages.push({ role: 'tool', tool_call_id: call.id, content: body });
+}
+
 async function handleRemember({ chatId, call, args, round, messages }) {
     const fields = args.fields || {};
     const keys = Object.keys(fields);
@@ -218,12 +253,13 @@ async function handleEndSession({ chatId, call, round, messages }) {
     messages.push({ role: 'tool', tool_call_id: call.id, content: body });
 }
 
-async function handleExecShell({ chatId, call, args, round }) {
+async function handleExecShell({ chatId, call, args, round, messages, followup }) {
     const command = args.command || '';
     const cwd = args.cwd || '';
     const location = cwd ? ` @ ${cwd}` : '';
-    console.log(`${timestamp()} ${chalk.bgYellow.black(' TOOL ')} ${chalk.yellow(command)}${chalk.dim(location)}`);
-    logOp('tool.call', { name: 'exec_shell', command, cwd: cwd || undefined, round });
+    const tag = followup ? ' TOOL* ' : ' TOOL ';
+    console.log(`${timestamp()} ${chalk.bgYellow.black(tag)} ${chalk.yellow(command)}${chalk.dim(location)}`);
+    logOp('tool.call', { name: 'exec_shell', command, cwd: cwd || undefined, followup, round });
 
     const pre = cwd
         ? `🔧 執行中: \`${command}\`\n📁 cwd: \`${cwd}\``
@@ -232,13 +268,20 @@ async function handleExecShell({ chatId, call, args, round }) {
     logOp('bot.reply', { chatId, text: pre, phase: 'tool.pre', round });
 
     const { ok, output, cwd: resolvedCwd } = await shell.run(command, { cwd });
-    logOp('tool.result', { name: 'exec_shell', command, cwd: resolvedCwd || cwd || undefined, ok, output, round });
+    logOp('tool.result', { name: 'exec_shell', command, cwd: resolvedCwd || cwd || undefined, ok, output, followup, round });
 
     const body = ok
         ? formatCommandSuccess({ command, cwd: resolvedCwd || cwd, output })
         : `⚠️ 指令執行失敗\n\`\`\`\n${output}\n\`\`\``;
     await sendMessage(chatId, body);
     logOp('bot.reply', { chatId, text: body, phase: 'tool.result', round });
+
+    if (followup) {
+        const toolContent = ok
+            ? `exit=0\n${output}`
+            : `exit!=0\n${output}`;
+        messages.push({ role: 'tool', tool_call_id: call.id, content: toolContent });
+    }
 }
 
 async function forceFinalSummary({ chatId, messages, tools }) {

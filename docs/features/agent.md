@@ -6,8 +6,9 @@
 
 | 類別 | 工具 | 呼叫後行為 |
 |------|------|-----------|
-| 讀取/寫入類 | `read_skill`、`web_fetch`、`remember`、`end_session`、`write_file` | 結果推回 messages，**繼續下一輪 LLM** |
-| 執行類 | `exec_shell` | 結果直接給使用者，**立刻終止** |
+| 讀取/寫入類 | `read_skill`、`web_fetch`、`remember`、`end_session`、`write_file`、`read_file` | 結果推回 messages，**繼續下一輪 LLM** |
+| 執行類 | `exec_shell`（預設） | 結果直接給使用者，**立刻終止** |
+| 執行類 opt-in | `exec_shell({ followup: true })` | 結果同時給使用者並推回 messages，**繼續下一輪 LLM**（多步驟任務用） |
 
 詳細原理與 trade-off 見 [../concepts/agent-loop.md](../concepts/agent-loop.md)。
 
@@ -15,7 +16,7 @@
 
 1. 入口 `appendHistory(chatId, 'user', text)` → `loadSession`（過期懶清）。
 2. 組 `messages = [system, user]`。system prompt 含三段：基礎指引 + skills 索引（`skills/` 非空時）+ `[對話狀態]` 區塊（session 存在時，含 `activeSkill` / `locked` / 最近 history）。
-3. `tools` 預設含 `exec_shell`、`write_file`、`web_fetch`、`remember`、`end_session`；`skills/` 非空再加 `read_skill`。
+3. `tools` 預設含 `exec_shell`、`write_file`、`read_file`、`web_fetch`、`remember`、`end_session`；`skills/` 非空再加 `read_skill`。
 4. Loop（上限 `MAX_ROUNDS = 5`）：
    - 呼叫 LLM，`reply` 推入 messages
    - `reply.content` 不空 → 發給使用者（`💬 <content>` 或純文字）並 `appendHistory('assistant', content)`
@@ -33,13 +34,15 @@
 | 抓網頁 | `🌐 抓取網頁: <url>` |
 | 鎖定欄位 | `🧠 鎖定欄位: <keys>` |
 | 寫入檔案 | `📝 寫入檔案: \`<path>\``；若指定目錄，下一行附 `📁 cwd: \`<path>\`` |
+| 讀取檔案 | `📄 讀取檔案: \`<path>\`` 可附 `(offset=.., limit=..)`；若指定目錄，下一行附 `📁 cwd: \`<path>\`` |
 | 執行指令 | `🔧 執行中: \`<cmd>\``；若指定目錄，下一行附 `📁 cwd: \`<path>\`` |
 | 執行結果 | 查詢型指令回傳 code block；寫檔類成功時改回 `✅ 任務完成` + 檔案/目錄，提示去存放位置查看 |
 
 ## Tools 規格
 
-- `exec_shell({ command, cwd? })`：timeout 30 秒、輸出上限 3800 字元；`cwd` 未提供時沿用 `lazyhole` 啟動目錄。`src/agent/tools/shell.js`
+- `exec_shell({ command, cwd?, followup? })`：timeout 30 秒、輸出上限 3800 字元；`cwd` 未提供時沿用 `lazyhole` 啟動目錄；`followup:true` 時結果推回 messages 並續跑下一輪（預設 false 單輪終止）。`src/agent/tools/shell.js`
 - `write_file({ path, content, cwd? })`：直接寫文字檔，自動建立父目錄；`cwd` 未提供時沿用 `lazyhole` 啟動目錄。`src/agent/tools/write_file.js`
+- `read_file({ path, cwd?, offset?, limit? })`：讀文字檔，回傳含行號內容；預設 limit 500 行、輸出 20KB 上限（`READ_FILE_MAX_BYTES`）；拒絕二進位與目錄。`src/agent/tools/read_file.js`
 - `web_fetch({ url })`：timeout 15 秒、輸出上限 8000 字元、HTML→markdown。`src/agent/tools/web_fetch.js`
 - `read_skill({ name })`：讀 `skills/<name>/SKILL.md` body；成功時 server 自動 `markActiveSkill`。`src/agent/tools/read_skill.js`
 - `remember({ fields })`：淺合併寫入 `session.locked`。`src/agent/tools/remember.js`
@@ -56,6 +59,7 @@ src/agent/
   tools/
     shell.js            # exec_shell
     write_file.js       # write_file
+    read_file.js        # read_file
     web_fetch.js        # web_fetch
     read_skill.js       # read_skill
     remember.js         # remember（寫入 session.locked）

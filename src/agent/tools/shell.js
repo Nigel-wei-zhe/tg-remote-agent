@@ -10,12 +10,13 @@ const definition = {
     type: 'function',
     function: {
         name: 'exec_shell',
-        description: '在伺服器上執行 shell 指令並回傳 stdout/stderr。30 秒逾時，輸出超過 3800 字截斷。',
+        description: '在伺服器上執行 shell 指令並回傳 stdout/stderr。30 秒逾時，輸出超過 3800 字截斷。預設單輪終止（結果直接給使用者）；若還需要根據輸出做後續步驟，帶 followup:true 讓結果回到 LLM 繼續下一輪。',
         parameters: {
             type: 'object',
             properties: {
                 command: { type: 'string', description: '要執行的 shell 指令' },
                 cwd: { type: 'string', description: '可選。執行指令時使用的工作目錄；未提供則沿用 lazyhole 啟動時的工作目錄。' },
+                followup: { type: 'boolean', description: '可選。true=執行後把結果塞回 LLM 續跑下一輪（適合多步驟任務）；預設 false，指令執行完直接結束本次任務。' },
             },
             required: ['command'],
         },
