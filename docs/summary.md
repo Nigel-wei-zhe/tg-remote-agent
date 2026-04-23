@@ -43,4 +43,5 @@
 
 ## 概念文件 (Architecture)
 - [Agent Loop 策略](./concepts/agent-loop.md): 單輪與多輪任務的執行路徑差異。
+- [Session 記憶架構](./concepts/session-memory-design.md): history/locked/summary 雙層設計與 LLM 主動摘要模式。
 - [Skill + 外部 CLI 整合斷鏈模式](./concepts/skill-adapter-integration-debug.md): blog-poster 三層連環 bug 的症狀、根因與通用教訓。

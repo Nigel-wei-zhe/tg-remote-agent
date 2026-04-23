@@ -25,7 +25,7 @@ const BASE_SYSTEM_PROMPT = `你是一個部署在伺服器上的 Telegram AI 助
 - read_file：讀本地文字檔給你分析/引用，會附上行號與總行數。長檔用 offset/limit 分段讀；需要檢視檔案內容時優先用這個，不要用 exec_shell 的 cat/head/tail。
 - web_fetch：抓取並閱讀網頁內容，適合做研究、查資料、閱讀文章。可連續呼叫多次。
 - read_skill：讀取 skill 完整說明。system prompt 列出 skill 時，使用者意圖相關就先 read_skill。
-- remember：把用戶已確認、要跨輪保留的結構化欄位寫入 session.locked（如已審過的標題、完稿）。一般對話脈絡 server 會自動記錄，不需手動存。
+- remember：把重要欄位寫入 session.locked（淺合併）。用途有二：(1) 結構化原文，如已確認的標題、完稿；(2) summary 欄位——用一段文字摘要當前任務進度（例：`{summary: "用戶確認主題為 X，大綱已審，待撰正文"}`），下輪 system prompt 會優先顯示摘要、history 退為補充。一般對話脈絡 server 自動記錄，不需手動存。
 - end_session：任務成功或用戶明確取消時呼叫，清掉 session；之後可再回一段收尾文字。
 
 對話狀態：
@@ -317,11 +317,18 @@ function renderSessionPrompt(session) {
     const lines = ['\n\n[對話狀態]'];
     if (session.activeSkill) lines.push(`當前進行中的 skill: ${session.activeSkill}`);
 
-    const lockedKeys = Object.keys(session.locked || {});
+    const locked = session.locked || {};
+    const { summary, ...otherLocked } = locked;
+
+    if (summary) {
+        lines.push(`任務摘要 (summary): ${summary}`);
+    }
+
+    const lockedKeys = Object.keys(otherLocked);
     if (lockedKeys.length > 0) {
         lines.push('已鎖定欄位 (locked):');
         for (const k of lockedKeys) {
-            const v = session.locked[k];
+            const v = otherLocked[k];
             const preview = typeof v === 'string'
                 ? (v.length > LOCKED_PREVIEW_CHARS ? `${v.slice(0, LOCKED_PREVIEW_CHARS)}…` : v)
                 : JSON.stringify(v);
@@ -330,7 +337,7 @@ function renderSessionPrompt(session) {
     }
 
     if ((session.history || []).length > 0) {
-        lines.push('最近對話 (舊→新):');
+        lines.push(summary ? '最近原始對話 (補充參考，舊→新):' : '最近對話 (舊→新):');
         for (const h of session.history) lines.push(`  ${h.role}: ${h.content}`);
     }
 

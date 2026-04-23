@@ -39,8 +39,18 @@
 
 | 工具 | 參數 | 用途 |
 |---|---|---|
-| `remember` | `{ fields: object }` | 淺合併寫入 `locked` |
+| `remember` | `{ fields: object }` | 淺合併寫入 `locked`；`summary` 為特殊欄位，見下 |
 | `end_session` | `{}` | 清 session；任務完成或用戶明確取消時呼叫 |
+
+### summary 欄位
+
+`locked.summary` 是保留的語意摘要欄位，由 LLM 在階段性節點寫入：
+
+```js
+remember({ summary: "用戶確認主題為 X，大綱已審，待撰正文" })
+```
+
+`renderSessionPrompt` 遇到 `summary` 時優先顯示，`history` 退為「補充參考」。適合長 skill 流程在關鍵節點壓縮語意，簡單對話不需要。設計細節見 [concepts/session-memory-design.md](../../concepts/session-memory-design.md)。
 
 實作：`src/agent/tools/remember.js`、`src/agent/tools/end_session.js`。
 
