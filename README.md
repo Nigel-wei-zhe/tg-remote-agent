@@ -69,7 +69,7 @@ lazyhole
 }
 ```
 
-修改後需重啟 `lazyhole` 生效。細節見 [docs/features/safety.md](./docs/features/safety.md)。
+修改後需重啟 `lazyhole` 生效。細節見 [docs/features/system/safety.md](./docs/features/system/safety.md)。
 
 ## Agent 工具
 
@@ -83,7 +83,7 @@ lazyhole
 | `remember`    | 鎖定結構化欄位到 session.locked（多階段 skill 用） | 結果塞回 LLM 繼續下一輪 |
 | `end_session` | 任務完成或取消時清空 session                       | 結果塞回 LLM 繼續下一輪 |
 
-短期記憶（session）：server 自動記錄最近對話、`read_skill` 自動標記進行中 skill、30 分鐘 idle 自動過期。細節見 [docs/features/session-memory.md](./docs/features/session-memory.md)。
+短期記憶（session）：server 自動記錄最近對話、`read_skill` 自動標記進行中 skill、30 分鐘 idle 自動過期。細節見 [docs/features/memory/session-memory.md](./docs/features/memory/session-memory.md)。
 
 Loop 上限 5 輪。設計原理見 [docs/concepts/agent-loop.md](./docs/concepts/agent-loop.md)。
 
@@ -103,7 +103,7 @@ src/
   llm/                 # LLM 抽象層與 providers
   utils/               # logger、telegram、session（短期記憶）
 skills/                # 自訂能力（每個一個資料夾含 SKILL.md）
-docs/                  # L1 summary + L2 features
+docs/                  # L1 summary + L2 groups (llm/tool/memory/chat/system) + L3 features
 log/
   error/               # 錯誤日誌（每日一檔）
   operation/           # 操作日誌 JSONL（含 LLM 完整交互）

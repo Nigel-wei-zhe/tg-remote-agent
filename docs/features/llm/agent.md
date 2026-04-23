@@ -10,7 +10,7 @@
 | 執行類 | `exec_shell`（預設） | 結果直接給使用者，**立刻終止** |
 | 執行類 opt-in | `exec_shell({ followup: true })` | 結果同時給使用者並推回 messages，**繼續下一輪 LLM**（多步驟任務用） |
 
-詳細原理與 trade-off 見 [../concepts/agent-loop.md](../concepts/agent-loop.md)。
+詳細原理與 trade-off 見 [../../concepts/agent-loop.md](../../concepts/agent-loop.md)。
 
 ## 流程
 
@@ -48,7 +48,7 @@
 - `remember({ fields })`：淺合併寫入 `session.locked`。`src/agent/tools/remember.js`
 - `end_session()`：清除 session；任務完成或用戶取消時呼叫。`src/agent/tools/end_session.js`
 
-短期記憶底層：`src/utils/session.js`，詳見 [session-memory.md](./session-memory.md)。
+短期記憶底層：`src/utils/session.js`，詳見 [session-memory.md](../memory/session-memory.md)。
 
 ## 模組結構
 
@@ -68,4 +68,4 @@ src/agent/
 
 ## 日誌
 
-每次互動寫入 `log/operation/` JSONL：`user.message`、`llm.request`、`llm.response`、`tool.call`、`tool.result`、`bot.reply`。詳見 [log.md](./log.md)。
+每次互動寫入 `log/operation/` JSONL：`user.message`、`llm.request`、`llm.response`、`tool.call`、`tool.result`、`bot.reply`。詳見 [log.md](../system/log.md)。
