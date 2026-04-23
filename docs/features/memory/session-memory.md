@@ -18,12 +18,12 @@
 
 | 欄位 | 誰寫 | 說明 |
 |---|---|---|
-| `updatedAt` | server | 每次寫入更新；超過 30 分鐘視為過期 |
+| `updatedAt` | server | 每次寫入更新；超過 `SESSION_IDLE_TTL_MIN`（預設 30）分鐘視為過期 |
 | `activeSkill` | server | 偵測到 `read_skill` 呼叫時自動標記 |
-| `history` | server | 每則 user/assistant content 自動 append；最多 6 則，每則截 500 字 |
+| `history` | server | 每則 user/assistant content 自動 append；最多 `SESSION_HISTORY_MAX`（預設 6）則，每則截 `SESSION_CONTENT_MAX_CHARS`（預設 500）字 |
 | `locked` | LLM | 透過 `remember` 工具寫入，淺合併（key 覆蓋） |
 
-常數定義於 `src/utils/session.js`：`IDLE_TTL_MS=30分`、`HISTORY_MAX=6`、`CONTENT_MAX_CHARS=500`。
+預設值由 `src/utils/session.js` 讀取環境變數：`SESSION_IDLE_TTL_MIN=30`、`SESSION_HISTORY_MAX=6`、`SESSION_CONTENT_MAX_CHARS=500`。
 
 ## Server 自動行為
 
@@ -72,5 +72,5 @@
 | Tool 數 | 3（save/load/clear_draft） | 2（remember/end_session） |
 | 寫入時機 | LLM 自覺 | Server 自動 + LLM 補鎖定 |
 | 讀取成本 | LLM 主動 load（吃 1 輪） | System prompt 注入（0 輪） |
-| TTL | 24h | 30 分鐘 idle |
+| TTL | 24h | idle 過期（預設 30 分，可調） |
 | 檢視 | 翻 `~/.lazyhole/drafts/*.json` | `/memory` 指令 |

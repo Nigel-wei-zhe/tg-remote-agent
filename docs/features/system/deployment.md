@@ -16,6 +16,9 @@
 - `MINIMAX_RETRY_MAX_ATTEMPTS` / `MINIMAX_RETRY_BASE_MS` / `MINIMAX_RETRY_MAX_MS`: MiniMax overload/rate-limit 重試參數。
 - `WRITE_FILE_MAX_BYTES`: `write_file` 單次寫入內容大小上限（bytes）。
 - `READ_FILE_MAX_BYTES`: `read_file` 單次輸出上限（bytes）。
+- `SESSION_IDLE_TTL_MIN`: session idle 過期分鐘數，預設 `30`。
+- `SESSION_HISTORY_MAX`: session 保留對話輪數，預設 `6`。
+- `SESSION_CONTENT_MAX_CHARS`: session 每則 history 截斷字元數，預設 `500`。
 
 ## bin 設定
 - package.json bin 直接指向 `server.js`（shebang: `#!/usr/bin/env node`）。

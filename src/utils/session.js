@@ -3,9 +3,15 @@ const os = require('os');
 const path = require('path');
 
 const SESSION_ROOT = path.join(os.homedir(), '.lazyhole', 'sessions');
-const IDLE_TTL_MS = 30 * 60 * 1000;
-const HISTORY_MAX = 6;
-const CONTENT_MAX_CHARS = 500;
+
+function getEnvInt(name, fallback) {
+    const raw = Number(process.env[name]);
+    return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : fallback;
+}
+
+const IDLE_TTL_MS = getEnvInt('SESSION_IDLE_TTL_MIN', 30) * 60 * 1000;
+const HISTORY_MAX = getEnvInt('SESSION_HISTORY_MAX', 6);
+const CONTENT_MAX_CHARS = getEnvInt('SESSION_CONTENT_MAX_CHARS', 500);
 
 function ensureDir() {
     if (!fs.existsSync(SESSION_ROOT)) fs.mkdirSync(SESSION_ROOT, { recursive: true });
