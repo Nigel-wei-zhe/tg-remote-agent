@@ -71,7 +71,8 @@ async function handle(chatId, text, sender, userId) {
 
         for (let round = 1; round <= MAX_ROUNDS; round++) {
             const streamer = createStreamer(chatId);
-            const reply = await llm.chatStream({ messages, tools }, streamer.onToken);
+            const onToken = (chunk) => { streamer.onToken(chunk); logOp('bot.chunk', { chatId, chunk, round }); };
+            const reply = await llm.chatStream({ messages, tools }, onToken);
             messages.push(reply);
 
             const content = (reply.content || '').trim();

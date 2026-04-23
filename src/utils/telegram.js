@@ -55,6 +55,7 @@ function createStreamer(chatId) {
     let buffer = '';
     let dirty = false;
     let flushing = false;
+    let flushPromise = Promise.resolve();
 
     const flush = async (isFinal = false) => {
         if (!dirty || flushing || !buffer) return;
@@ -76,12 +77,13 @@ function createStreamer(chatId) {
         flushing = false;
     };
 
-    const interval = setInterval(() => flush(false), 700);
+    const interval = setInterval(() => { flushPromise = flush(false); }, 700);
 
     return {
         onToken: (chunk) => { buffer += chunk; dirty = true; },
         finalize: async () => {
             clearInterval(interval);
+            await flushPromise;
             if (buffer) { dirty = true; await flush(true); }
             return buffer;
         },
