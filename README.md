@@ -10,6 +10,7 @@
 
 1. **設定環境**：
    參考 `.env.example` 建立並填寫 `.env`（需包含 `TELEGRAM_TOKEN`、`TELEGRAM_ALLOWED_USER_ID` 與 `MINIMAX_API_KEY`）。
+   可用 `AGENT_MAX_ROUNDS` 調整每則訊息的 Agent 互動輪數（預設 `5`）。
    _詳細部署指引見 [docs/system/deployment.md](./docs/features/system/deployment.md)_
 
 2. **安裝與運行**：

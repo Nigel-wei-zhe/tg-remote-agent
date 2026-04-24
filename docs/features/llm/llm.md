@@ -23,6 +23,7 @@ chatStream({ messages, tools }, onToken) -> message
 - 預設模型: `MiniMax-M2.7`
 - 帶 tools 時同時設 `tool_choice: 'auto'`
 - Streaming 模式：`stream: true` + SSE 解析，支援 content token 與 tool_calls 累積
+- `llm.request` 會記錄完整 payload（含 messages/tools/tool_choice/stream），用於追查 system prompt、session、tool call 決策上下文
 - 重試機制：對 `429`、`5xx`、`529`、`High traffic detected`、暫時性網路錯誤做指數退避重試
 - 串流保護：若已開始輸出 token 或 tool_calls，後續錯誤不重試，避免 Telegram 端收到重複內容
 

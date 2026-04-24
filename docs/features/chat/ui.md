@@ -2,6 +2,7 @@
 
 ## 核心設計
 - **Typing 指示器**: 指令執行或 LLM 等待期間，透過 `sendChatAction(typing)` 每 4 秒重送，讓使用者在 Telegram 看到「正在輸入...」直到回覆送出或錯誤發生。
+- **程式碼區塊**: 一般送訊與 LLM 串流 finalize 會把 Markdown fenced code block 轉成 Telegram HTML `<pre><code>`；串流中維持純文字，最後一次 edit 才套格式，避免半截 code fence 造成 entity parse 錯誤。
 - **啟動畫面**: 使用 `cli-box` 輸出 `LazyHole-Agent` 面板，集中展示 `ONLINE`、`MODE`、`ALLOW`、`CLI`、`TRANSPORT`、`EXIT`。
 - **排版**: 啟動面板下方固定接 `Live Event Stream` 分隔線，將品牌區與執行日誌切成兩段。
 - **色彩**: 透過 `chalk` 為不同事件套用專屬色標（如 `[EXEC]`, `[DONE]`, `[FAIL]`, `[RECV]`, `[ERR!]`），提升日誌可讀性。

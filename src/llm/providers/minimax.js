@@ -202,7 +202,7 @@ async function chatStream({ messages, tools, toolChoice }, onToken) {
     const model = process.env.MINIMAX_MODEL || 'MiniMax-M2.7';
     const payload = { ...buildPayload(model, messages, tools, toolChoice), stream: true };
 
-    logOp('llm.request', { provider: 'minimax', model, stream: true });
+    logOp('llm.request', { provider: 'minimax', model, stream: true, payload });
 
     return withMiniMaxRetry('chatStream', async () => {
         const response = await openStream(apiKey, payload);

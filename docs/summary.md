@@ -19,7 +19,7 @@
 ## 功能索引 (L2 Groups / L3 Details)
 
 ### llm
-- [**AI Agent 核心**](./features/llm/agent.md): 決策循環與內建工具 (shell/fetch，shell 支援 cwd 與 followup 多輪；寫檔成功回精簡完成訊息)。
+- [**AI Agent 核心**](./features/llm/agent.md): 決策循環與內建工具 (shell/fetch，shell 支援 cwd，預設多輪，`final:true` 才直出；寫檔成功回精簡完成訊息)。
 - [**LLM 整合**](./features/llm/llm.md): MiniMax API 參數、Streaming 與 overload retry/backoff 配置。
 
 ### tool

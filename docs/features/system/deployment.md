@@ -16,6 +16,7 @@
 
 - `MINIMAX_MODEL`: MiniMax model id。
 - `LLM_PROVIDER`: LLM provider（預設 minimax）。
+- `AGENT_MAX_ROUNDS`: 每則使用者訊息最多 LLM/tool 互動輪數，預設 `5`。
 - `MINIMAX_RETRY_MAX_ATTEMPTS` / `MINIMAX_RETRY_BASE_MS` / `MINIMAX_RETRY_MAX_MS`: MiniMax overload/rate-limit 重試參數。
 - `WRITE_FILE_MAX_BYTES`: `write_file` 單次寫入內容大小上限（bytes）。
 - `READ_FILE_MAX_BYTES`: `read_file` 單次輸出上限（bytes）。

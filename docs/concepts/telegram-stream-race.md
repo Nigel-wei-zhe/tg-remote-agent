@@ -46,7 +46,7 @@ Telegram (user) ──poll──▶ server.js
 | 位置 | 負責 |
 |------|------|
 | `server.js` | Telegram long polling、白名單、指令前綴路由（`/run`、`/memory` 走旁路）|
-| `src/agent/index.js` | LLM agent 主迴圈（`MAX_ROUNDS = 5`）、工具分派 |
+| `src/agent/index.js` | LLM agent 主迴圈（`AGENT_MAX_ROUNDS` 預設 `5`）、工具分派 |
 | `src/llm/providers/minimax.js` | MiniMax 串流呼叫、token 以 `onToken(chunk)` callback 吐出 |
 | `src/utils/telegram.js` | `sendMessage` / `startTyping` / **`createStreamer`（本文主角）** |
 | `src/utils/session.js` | 跨輪短期記憶 |

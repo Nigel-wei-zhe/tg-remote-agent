@@ -10,13 +10,13 @@ const definition = {
     type: 'function',
     function: {
         name: 'exec_shell',
-        description: '在伺服器上執行 shell 指令並回傳 stdout/stderr。30 秒逾時，輸出超過 3800 字截斷。預設單輪終止（結果直接給使用者）；若還需要根據輸出做後續步驟，帶 followup:true 讓結果回到 LLM 繼續下一輪。',
+        description: '在伺服器上執行 shell 指令並回傳 stdout/stderr。30 秒逾時，輸出超過 3800 字截斷。預設作為中間步驟，Telegram 只顯示簡短進度，完整結果回到 LLM 繼續下一輪。只有當這個指令結果就是最終要呈現給使用者的答案時，才帶 final:true；指令失敗、搜尋型空輸出、或同輪還有其他 tool 結果待消化時，仍會回到 LLM 續跑。',
         parameters: {
             type: 'object',
             properties: {
                 command: { type: 'string', description: '要執行的 shell 指令' },
                 cwd: { type: 'string', description: '可選。執行指令時使用的工作目錄；未提供則沿用 lazyhole 啟動時的工作目錄。' },
-                followup: { type: 'boolean', description: '可選。true=執行後把結果塞回 LLM 續跑下一輪（適合多步驟任務）；預設 false，指令執行完直接結束本次任務。' },
+                final: { type: 'boolean', description: '可選。true=這個成功結果就是最終要給使用者看的答案，可直接呈現並結束；預設 false=中間步驟，結果只給 LLM 續跑下一輪。' },
             },
             required: ['command'],
         },

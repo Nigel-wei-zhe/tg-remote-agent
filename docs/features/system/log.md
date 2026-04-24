@@ -26,17 +26,17 @@ log/
 |-------|---------|---------|
 | `auth.blocked` | 白名單未通過 | userId, sender, chatId, text |
 | `user.message` | 收到訊息 | chatId, userId, sender, text, route? |
-| `llm.request` | 送出 LLM 請求 | provider, model, payload |
+| `llm.request` | 送出 LLM 請求 | provider, model, stream?, payload（完整 messages/tools/tool_choice/stream） |
 | `llm.retry` | MiniMax 可恢復錯誤退避後重試 | provider, requestName, attempt, nextAttempt, delayMs, reason, statusCode? |
 | `llm.response` | 收到 LLM 回應 | provider, data (完整 response) |
-| `tool.call` | Agent 呼叫工具 | name, command?/path?/cwd?/url?/args?/contentLength?, round |
-| `tool.result` | 工具執行結果 | name, ok, command?/path?/cwd?/url?/skillName?, output?/length?/status?/bytes?, round |
+| `tool.call` | Agent 呼叫工具 | name, command?/path?/cwd?/url?/args?/contentLength?, final?, allowFinal?, round |
+| `tool.result` | 工具執行結果 | name, ok, command?/path?/cwd?/url?/skillName?, output?/length?/status?/bytes?, final?, allowFinal?, round |
 | `tool.unknown` | LLM 要求了未知工具 | name, round |
-| `agent.max_rounds` | 撞 MAX_ROUNDS，觸發強制總結 | chatId |
+| `agent.max_rounds` | 撞 Agent 輪數上限，觸發強制總結 | chatId |
 | `bot.chunk` | LLM 串流每個 token chunk | chatId, chunk, round |
-| `bot.reply` | 回傳給 TG 的內容 | chatId, text, phase (`llm.content` / `tool.pre` / `tool.result` / `skill.read` / `fetch.pre` / `write.pre` / `empty` / `max_rounds.summary`), round? |
+| `bot.reply` | 回傳給 TG 的內容 | chatId, text, phase (`llm.content` / `tool.pre` / `tool.result` / `tool.progress` / `skill.read` / `fetch.pre` / `write.pre` / `empty` / `max_rounds.summary`), round? |
 
 ## 注意
-- operation log 包含 LLM 完整對話與 shell 輸出，可能含敏感資訊。
-- Telegram 發送若遇到 Markdown entity 解析錯誤，會退回純文字重送一次。
+- operation log 包含 LLM 完整 request payload、對話內容與 shell 輸出，可能含敏感資訊。
+- Telegram 發送使用 HTML parse mode；若遇到 entity 解析錯誤，會退回純文字重送一次。
 - 目前不做 rotation，膨脹過快再加。

@@ -6,8 +6,8 @@
 
 - **讀資料的工具**（`read_skill`、`web_fetch`）→ 拿到結果後**再 call LLM**，讓它決定下一步。
 - **寫入類工具**（`write_file`）→ 寫入後**再 call LLM**，讓它收尾或決定下一步。
-- **執行動作的工具**（`exec_shell`）→ 拿到結果後**直接給使用者**，不再 call LLM（節省時間與成本）。
-- 整個互動最多 5 輪 LLM，避免失控。
+- **執行動作的工具**（`exec_shell`）→ 預設只顯示簡短進度，完整結果回到 LLM；只有 `final:true` 才直接給使用者並結束。
+- 整個互動最多 `AGENT_MAX_ROUNDS` 輪 LLM，避免失控。
 
 ---
 
@@ -112,7 +112,8 @@ flowchart TD
 
 所以同一個 agent 裡：
 - 有些 tool 需要多輪（像 `read_skill`）
-- 有些 tool 希望單輪就結束（像 `exec_shell`）
+- 多數 shell 呼叫只是中間查閱/修改，應該把結果交回 LLM 繼續
+- 少數 shell 呼叫是最終輸出，才應該用 `final:true` 單輪結束
 
 ---
 
@@ -123,15 +124,16 @@ flowchart TD
 | 類別 | 工具 | 特性 | 呼叫後行為 |
 |------|------|------|-----------|
 | 讀取/寫入類 | `read_skill`、`web_fetch`、`write_file` | 拿資料或落檔，非 shell | 結果塞回 messages，**繼續下一輪 LLM** |
-| 執行類 | `exec_shell` | 會動到系統、使用者要的是輸出本身 | 結果直接給使用者，**立刻終止** |
+| 執行類 | `exec_shell` | 會動到系統，通常仍需 LLM 判斷下一步 | Telegram 只顯示進度/ack，完整結果塞回 messages，**繼續下一輪 LLM** |
+| 執行類 final | `exec_shell({ final:true })` | 成功結果本身就是使用者要看的最終答案 | 完整結果給使用者，**立刻終止**；失敗、搜尋型空輸出或同輪仍有其他 tool 結果時續跑 |
 
 這樣的好處：
 
 1. **純聊天**：1 次 LLM，無工具 → 最快
-2. **執行單一指令**（「列資料夾」、「重啟服務」）：1 次 LLM + 1 次 exec_shell → 快
+2. **執行單一指令**（「列資料夾」、「重啟服務」）：Agent 預設會讓 LLM 看結果後收尾；使用者要 raw output 時走 `/run`
 3. **研究任務**（「幫我看 XX 網站怎麼說」）：N 次 web_fetch + 最後回一段文字 → 自動多輪
-4. **用 skill 部署**：read_skill + exec_shell，恰好 2 次 LLM → 可接受
-5. **研究 + 執行混合**：多次 web_fetch → 最後 exec_shell 終止 → 自然
+4. **用 skill 部署**：read_skill + exec_shell；中間檢查預設續跑，最終部署結果才用 `final:true`
+5. **研究 + 執行混合**：多次 web_fetch / exec_shell → 最後文字收尾或 `final:true` 終止
 
 ### 為什麼不用 Option B 全多輪？
 
@@ -141,7 +143,7 @@ Option B 的代價是：每個 shell 指令都會被 LLM 多轉一次。對 90% 
 - Option B 會給你：「你的磁碟用了 73%，主要被 node_modules 吃掉...」
 - 速度慢 3 秒、token 多花一次、回覆還可能漏細節
 
-所以執行類工具走 Option A 更符合使用者直覺。
+因此 raw shell 需求交給 `/run`；Agent 模式的 `exec_shell` 預設多輪，降低任務被中間查詢截斷的機率。
 
 ---
 
@@ -149,9 +151,9 @@ Option B 的代價是：每個 shell 指令都會被 LLM 多轉一次。對 90% 
 
 每次 LLM 都可能決定「再抓一個網頁」、「再讀一個 skill」。理論上能跑到天荒地老。
 
-**保險絲：`MAX_ROUNDS = 5` + 強制總結**
+**保險絲：`AGENT_MAX_ROUNDS`（預設 `5`）+ 強制總結**
 
-- 超過 5 輪不直接中斷，而是**再 call 一次 LLM 強制總結**：把 `tool_choice: 'none'` 加進 system 訊息「禁止再呼叫工具，用現有資料回覆」，把 LLM 逼回文字路徑
+- 超過上限不直接中斷，而是**再 call 一次 LLM 強制總結**：把 `tool_choice: 'none'` 加進 system 訊息「禁止再呼叫工具，用現有資料回覆」，把 LLM 逼回文字路徑
 - 回覆前綴 `⚠️ 已達互動上限...` 讓使用者知道這是 best-effort 結果
 - 避免出現「抓了 9 個網頁，最後一個字都沒寫就中斷」的浪費
 - System prompt 還會**提前告訴 LLM 有幾輪預算**，要它在 2~3 個來源後就產出，減少撞上限的機率
@@ -174,8 +176,8 @@ Option B 的代價是：每個 shell 指令都會被 LLM 多轉一次。對 90% 
 ## 延伸思考
 
 1. **web_fetch 如果回的網頁很大怎麼辦？** 目前截斷到 8000 字，LLM 可能漏關鍵資訊。未來可加「fetch 後自動摘要」層，但這又多一次 LLM call，又回到權衡。
-2. **exec_shell 能不能也走多輪，但由 LLM 主動決定？** 可以讓 LLM 用「tool_choice: none」在最後一輪做總結。這樣第一次 exec_shell 不終止，但下一輪 LLM 不能再呼叫工具、只能回文字。程式複雜度顯著上升，先不做。
-3. **如果有一個 skill 真的需要「exec → 判斷 → exec」呢？** 例如先 `git status` 再根據輸出決定要不要 `git stash`。目前做法是寫成一行 shell 鏈（`git status && ... && git stash`），或把邏輯包進 CLI（讓 `ni` 自己判斷）。硬要在 LLM 層做，就要改成 Option B。
+2. **exec_shell 能不能也走多輪，但由 LLM 主動決定？** 現在預設就是多輪；最終要給使用者看的指令才用 `final:true`。
+3. **如果有一個 skill 真的需要「exec → 判斷 → exec」呢？** 例如先 `git status` 再根據輸出決定要不要 `git stash`。預設 exec 結果會回到 LLM，再決定下一步。
 
 ---
 
@@ -183,19 +185,19 @@ Option B 的代價是：每個 shell 指令都會被 LLM 多轉一次。對 90% 
 
 ```
 讀取/寫入類 (read_skill, web_fetch, write_file, read_file) → 多輪
-執行類 (exec_shell)                                        → 預設單輪終止
-執行類 opt-in (exec_shell + followup:true)                 → 多輪
-MAX_ROUNDS = 5
+執行類 (exec_shell)                                        → 預設多輪，TG 只顯示簡短進度
+執行類 final (exec_shell + final:true)                     → 成功且可終止時完整結果直出
+AGENT_MAX_ROUNDS = 5 (預設，可由 env 覆蓋)
 ```
 
-實作位置：`src/agent/index.js`，在 handleReadSkill / handleWebFetch / handleExecShell 等函式裡分別處理。`exec_shell` 的 `followup` 旗標由 LLM 依任務性質自行決定。
+實作位置：`src/agent/index.js`，在 handleReadSkill / handleWebFetch / handleExecShell 等函式裡分別處理。`exec_shell` 的 `final` 旗標由 LLM 依任務性質自行決定。
 
 如果未來新增工具，依這個表判斷歸哪一類、照既有 pattern 實作即可。
 
-## 延伸決策：exec_shell 的 followup 旗標（2026-04-23）
+## 延伸決策：exec_shell 的 final 旗標（2026-04-24）
 
-原本設計是「exec_shell 永遠單輪終止」，但實務發現多步驟任務（例如「建一個完整 demo 專案」）會在第一個 shell 指令就被切斷。折衷方案是在 `exec_shell` 加 `followup:boolean` 參數，預設 false 維持原行為；LLM 判斷這次只是多步驟的其中一步、後面還要根據結果動作時才帶 true。好處：
+原本設計是「exec_shell 預設單輪終止」，但實務發現多步驟任務會被中間查詢切斷，甚至同一輪 `read_file` 的內容還沒送回 LLM 就被後續 shell 結果終止。新策略是 `exec_shell` 預設多輪，只有 `final:true` 才允許成功結果直出；失敗、搜尋型空輸出或同輪仍有其他 tool 結果待消化時一律續跑。好處：
 
-- 不動 90% 單次查詢/動作的 UX（沒有多餘 LLM 總結、沒有多花 token）。
-- 把選擇權給 LLM，而不是全域切換。
-- 可觀察期：累積日誌判斷 LLM 用得合不合理，再決定要不要擴大為預設或收回。
+- Agent 任務不會被中間 shell 查詢截斷。
+- `/run` 保留 raw shell 快查 UX。
+- 最終輸出需要明確標記，避免誤把探索結果當答案。

@@ -9,33 +9,67 @@ function isEntityParseError(reason) {
     return typeof reason === 'string' && reason.includes(`can't parse entities`);
 }
 
-async function sendMessage(chatId, text) {
+function escapeHtml(text) {
+    return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function formatTelegramHtml(text) {
+    const source = String(text ?? '');
+    const parts = [];
+    const fencePattern = /```([A-Za-z0-9_+.-]*)[ \t]*\n?([\s\S]*?)```/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = fencePattern.exec(source)) !== null) {
+        parts.push(escapeHtml(source.slice(lastIndex, match.index)));
+        const lang = match[1] ? ` class="language-${escapeHtml(match[1])}"` : '';
+        const code = escapeHtml(match[2].replace(/\n$/, ''));
+        parts.push(`<pre><code${lang}>${code}</code></pre>`);
+        lastIndex = fencePattern.lastIndex;
+    }
+
+    parts.push(escapeHtml(source.slice(lastIndex)));
+    return parts.join('');
+}
+
+async function postTelegramMessage(method, payload, fallbackPayload, errorContext) {
     try {
-        await axios.post(`${TG_BASE()}/sendMessage`, {
-            chat_id: chatId,
-            text,
-            parse_mode: 'Markdown'
-        });
+        await axios.post(`${TG_BASE()}/${method}`, payload);
+        return;
     } catch (err) {
         const reason = err.response ? err.response.data.description : err.message;
         if (isEntityParseError(reason)) {
             try {
-                await axios.post(`${TG_BASE()}/sendMessage`, {
-                    chat_id: chatId,
-                    text,
-                });
+                await axios.post(`${TG_BASE()}/${method}`, fallbackPayload);
                 return;
             } catch (fallbackErr) {
                 const fallbackReason = fallbackErr.response ? fallbackErr.response.data.description : fallbackErr.message;
                 console.error(`${timestamp()} ${chalk.bgRed.white(' ERR ')} ${chalk.red('發送失敗: ' + fallbackReason)}`);
-                logError('SEND', `${reason} | fallback: ${fallbackReason}`);
+                logError(errorContext, `${reason} | fallback: ${fallbackReason}`);
                 return;
             }
         }
 
         console.error(`${timestamp()} ${chalk.bgRed.white(' ERR ')} ${chalk.red('發送失敗: ' + reason)}`);
-        logError('SEND', reason);
+        logError(errorContext, reason);
     }
+}
+
+async function sendMessage(chatId, text) {
+    const html = formatTelegramHtml(text);
+    await postTelegramMessage(
+        'sendMessage',
+        {
+            chat_id: chatId,
+            text: html,
+            parse_mode: 'HTML',
+        },
+        { chat_id: chatId, text },
+        'SEND',
+    );
 }
 
 function startTyping(chatId) {
@@ -59,17 +93,23 @@ function createStreamer(chatId) {
 
     const doFlush = async (isFinal) => {
         if (!buffer) return;
-        const text = buffer + (isFinal ? '' : ' ▌');
+        const rawText = buffer + (isFinal ? '' : ' ▌');
+        const text = isFinal ? formatTelegramHtml(buffer) : rawText;
         if (text === lastSent) return;
         try {
             if (!messageId) {
-                const res = await axios.post(`${TG_BASE()}/sendMessage`, { chat_id: chatId, text });
+                const res = await axios.post(`${TG_BASE()}/sendMessage`, {
+                    chat_id: chatId,
+                    text,
+                    ...(isFinal ? { parse_mode: 'HTML' } : {}),
+                });
                 messageId = res.data?.result?.message_id;
             } else {
                 await axios.post(`${TG_BASE()}/editMessageText`, {
                     chat_id: chatId,
                     message_id: messageId,
                     text,
+                    ...(isFinal ? { parse_mode: 'HTML' } : {}),
                 });
             }
             lastSent = text;
@@ -79,12 +119,17 @@ function createStreamer(chatId) {
             logError('TG_EDIT_FINAL', reason);
             await new Promise((r) => setTimeout(r, 1200));
             try {
-                await axios.post(`${TG_BASE()}/editMessageText`, {
-                    chat_id: chatId,
-                    message_id: messageId,
-                    text,
-                });
-                lastSent = text;
+                if (!messageId) {
+                    const res = await axios.post(`${TG_BASE()}/sendMessage`, { chat_id: chatId, text: buffer });
+                    messageId = res.data?.result?.message_id;
+                } else {
+                    await axios.post(`${TG_BASE()}/editMessageText`, {
+                        chat_id: chatId,
+                        message_id: messageId,
+                        text: buffer,
+                    });
+                }
+                lastSent = buffer;
             } catch (err2) {
                 logError('TG_EDIT_FINAL_RETRY', err2.response?.data?.description || err2.message);
             }

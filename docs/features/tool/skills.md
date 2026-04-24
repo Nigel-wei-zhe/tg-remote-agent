@@ -32,8 +32,9 @@ description: <一句話>       # 會塞進 system prompt，精簡
 3. **混合策略**：
    - `read_skill` 呼叫 → 把 body 以 `role: tool` 推回 messages，**繼續下一輪 LLM**。
    - `write_file` 呼叫 → 直接寫檔後推回 messages，**繼續下一輪 LLM**（長內容落地用）。
-   - `exec_shell` 呼叫 → 執行並回結果，**立刻終止**（Option A）。
-4. 上限 `MAX_ROUNDS = 5`，超過回覆中止訊息。
+   - `exec_shell` 呼叫 → Telegram 只顯示簡短進度，完整結果推回 messages，**繼續下一輪 LLM**。
+   - `exec_shell({ final:true })` → 成功且同輪無其他 tool 結果待消化時，完整結果給使用者並結束。
+4. 上限 `AGENT_MAX_ROUNDS`（預設 `5`），超過後強制總結。
 
 ## Tool 定義
 - `read_skill(name: string)`：回傳該 skill 完整 body，或錯誤訊息（skill 不存在時）。
@@ -41,7 +42,7 @@ description: <一句話>       # 會塞進 system prompt，精簡
  - `write_file({ path, content, cwd? })`：直接寫文字檔，適合長內容落地；實作：`src/agent/tools/write_file.js`。
 
 ## 使用者可見流程
-讀 skill 時會收到 `📖 讀取 skill: <name>`；接著 LLM 若呼叫 exec_shell 則照常顯示 `🔧 執行中` 與結果。
+讀 skill 時會收到 `📖 讀取 skill: <name>`；接著 LLM 若用 `exec_shell` 查閱或處理，只顯示簡短進度；最終需要把 shell 結果直接給使用者時才用 `exec_shell final:true`。
 
 ## 撰寫守則
 - `description` 寫「何時該用」而非「做什麼」。
