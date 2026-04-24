@@ -45,7 +45,7 @@
 - `exec_shell({ command, cwd?, final? })`：timeout 30 秒、輸出上限 3800 字元；`cwd` 未提供時沿用 `lazyhole` 啟動目錄；預設作為中間步驟，Telegram 只顯示簡短進度/ack，完整結果推回 messages 並續跑下一輪；`final:true` 表示成功結果就是最終答案，可直接呈現並結束；失敗、搜尋型空輸出、或同輪仍有其他 tool 結果待消化時會續跑。`src/agent/tools/shell.js`
 - `write_file({ path, content, cwd? })`：直接寫文字檔，自動建立父目錄；`cwd` 未提供時沿用 `lazyhole` 啟動目錄。`src/agent/tools/write_file.js`
 - `read_file({ path, cwd?, offset?, limit? })`：讀文字檔，回傳含行號內容；預設 limit 500 行、輸出 20KB 上限（`READ_FILE_MAX_BYTES`）；拒絕二進位與目錄。`src/agent/tools/read_file.js`
-- `web_fetch({ url })`：timeout 15 秒、輸出上限 8000 字元、HTML→markdown。`src/agent/tools/web_fetch.js`
+- `web_fetch({ url, render? })`：輸出上限 8000 字元、HTML→markdown。`render` 可為 `auto`（預設）、`static`、`browser`；`auto` 先用 axios 靜態抓取，疑似 SPA 空殼時改用 Playwright Chromium 渲染。靜態 timeout 15 秒，瀏覽器 timeout 20 秒。`src/agent/tools/web_fetch.js`
 - `read_skill({ name })`：讀 `skills/<name>/SKILL.md` body；成功時 server 自動 `markActiveSkill`。`src/agent/tools/read_skill.js`
 - `remember({ fields })`：淺合併寫入 `session.locked`。`src/agent/tools/remember.js`
 - `end_session()`：清除 session；任務完成或用戶取消時呼叫。`src/agent/tools/end_session.js`

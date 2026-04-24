@@ -15,6 +15,8 @@
 
 2. **安裝與運行**：
    ```bash
+   npm install
+   npx playwright install chromium  # web_fetch 讀 SPA 網頁用
    npm link  # 建立全域指令
    lazyhole  # 啟動機器人
    ```
@@ -35,7 +37,7 @@
 
 為了保持精簡，具體實作細節請參閱對應文檔：
 
-- 🧠 **Agent 決策循環**：內建工具（Shell、讀寫檔、網頁抓取）的運作邏輯。 [詳見 L2-llm](./docs/features/llm/agent.md)
+- 🧠 **Agent 決策循環**：內建工具（Shell、讀寫檔、網頁抓取含 SPA 渲染）的運作邏輯。 [詳見 L2-llm](./docs/features/llm/agent.md)
 - 🛡️ **指令安全守門**：如何透過 `setting.json` 攔截危險指令。 [詳見 L2-system](./docs/features/system/safety.md)
 - 🔌 **Skills 擴展**：如何為 Agent 注入自定義的領域能力。 [詳見 L2-tool](./docs/features/tool/skills.md)
 - 💾 **短期記憶架構**：Session 鎖定與自動過期機制。 [詳見 L2-memory](./docs/features/memory/session-memory.md)

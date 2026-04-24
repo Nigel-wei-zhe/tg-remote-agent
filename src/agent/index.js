@@ -172,21 +172,23 @@ async function handleReadSkill({ chatId, call, args, round, messages }) {
 
 async function handleWebFetch({ chatId, call, args, round, messages }) {
   const url = args.url || ""
+  const render = args.render || "auto"
   console.log(
     `${timestamp()} ${chalk.bgCyan.black(" FETCH ")} ${chalk.cyan(url)}`,
   )
-  logOp("tool.call", { name: "web_fetch", url, round })
+  logOp("tool.call", { name: "web_fetch", url, render, round })
 
   const pre = `🌐 抓取網頁: ${url}`
   await sendMessage(chatId, pre)
   logOp("bot.reply", { chatId, text: pre, phase: "fetch.pre", round })
 
-  const { ok, text, status } = await webFetch.run(url)
+  const { ok, text, status, mode } = await webFetch.run(url, { render })
   logOp("tool.result", {
     name: "web_fetch",
     url,
     ok,
     status,
+    mode,
     length: text.length,
     round,
   })

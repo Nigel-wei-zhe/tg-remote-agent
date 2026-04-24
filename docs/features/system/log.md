@@ -29,8 +29,8 @@ log/
 | `llm.request` | 送出 LLM 請求 | provider, model, stream?, payload（完整 messages/tools/tool_choice/stream） |
 | `llm.retry` | MiniMax 可恢復錯誤退避後重試 | provider, requestName, attempt, nextAttempt, delayMs, reason, statusCode? |
 | `llm.response` | 收到 LLM 回應 | provider, data (完整 response) |
-| `tool.call` | Agent 呼叫工具 | name, command?/path?/cwd?/url?/args?/contentLength?, final?, allowFinal?, round |
-| `tool.result` | 工具執行結果 | name, ok, command?/path?/cwd?/url?/skillName?, output?/length?/status?/bytes?, final?, allowFinal?, round |
+| `tool.call` | Agent 呼叫工具 | name, command?/path?/cwd?/url?/args?/contentLength?/render?, final?, allowFinal?, round |
+| `tool.result` | 工具執行結果 | name, ok, command?/path?/cwd?/url?/skillName?, output?/length?/status?/bytes?/mode?, final?, allowFinal?, round |
 | `tool.unknown` | LLM 要求了未知工具 | name, round |
 | `agent.max_rounds` | 撞 Agent 輪數上限，觸發強制總結 | chatId |
 | `bot.chunk` | LLM 串流每個 token chunk | chatId, chunk, round |

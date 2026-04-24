@@ -2,8 +2,10 @@
 
 ## 啟動方式
 
-1. npm link # 建立全域指令
-2. lazyhole # 啟動機器人
+1. `npm install`
+2. `npx playwright install chromium` # web_fetch SPA 渲染用
+3. `npm link` # 建立全域指令
+4. `lazyhole` # 啟動機器人
 
 ## 必要環境變數
 
