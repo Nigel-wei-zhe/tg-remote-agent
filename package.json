@@ -1,7 +1,7 @@
 {
   "name": "lazyhole-agent",
   "version": "1.0.0",
-  "description": "A minimalist, zero-memory Telegram AI Agent for lazy server management.",
+  "description": "A minimalist Telegram AI Agent with session memory for lazy server management.",
   "main": "server.js",
   "bin": {
     "lazyhole": "./server.js"

@@ -23,8 +23,9 @@
 - `WRITE_FILE_MAX_BYTES`: `write_file` 單次寫入內容大小上限（bytes）。
 - `READ_FILE_MAX_BYTES`: `read_file` 單次輸出上限（bytes）。
 - `SESSION_IDLE_TTL_MIN`: session idle 過期分鐘數，預設 `30`。
-- `SESSION_HISTORY_MAX`: session 保留對話輪數，預設 `6`。
-- `SESSION_CONTENT_MAX_CHARS`: session 每則 history 截斷字元數，預設 `500`。
+- `SESSION_COMPACT_TRIGGER_CHARS`: session 注入 prompt 前的壓縮觸發字元數，預設 `12000`。
+- `MEMORY_DB_PATH`: 記憶歷史 SQLite 路徑，預設 `~/.lazyhole/memory.sqlite`。
+- `SQLITE_BIN`: sqlite3 CLI 路徑，預設 `sqlite3`。
 
 ## bin 設定
 

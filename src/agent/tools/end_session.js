@@ -1,4 +1,5 @@
 const session = require('../../utils/session');
+const { archiveCurrentSession } = require('../../utils/session-archive');
 
 const definition = {
     type: 'function',
@@ -12,9 +13,13 @@ const definition = {
     },
 };
 
-function run(chatId) {
+async function run(chatId, options = {}) {
     try {
-        session.clearSession(chatId);
+        const result = await archiveCurrentSession(chatId, {
+            trigger: 'end_session',
+            onProgress: options.onProgress,
+        });
+        if (!result.archived) session.clearSession(chatId);
         return { ok: true, body: '已結束 session。' };
     } catch (err) {
         return { ok: false, body: `end_session 失敗：${err.message}` };

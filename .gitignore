@@ -14,6 +14,11 @@ Thumbs.db
 # 執行日誌
 log/*
 
+# 本地資料庫
+*.sqlite
+*.sqlite3
+.lazyhole/
+
 # 技能
 skills/*
 

@@ -9,6 +9,8 @@ const remember = require("./tools/remember")
 const endSession = require("./tools/end_session")
 const skills = require("./skills")
 const sessionStore = require("../utils/session")
+const { renderSessionPrompt } = require("../utils/session-prompt")
+const { archiveExpiredSession } = require("../utils/session-archive")
 const {
   sendMessage,
   startTyping,
@@ -26,7 +28,7 @@ function getEnvInt(name, fallback) {
 
 const timestamp = () => chalk.gray(`[${new Date().toLocaleTimeString()}]`)
 const MAX_ROUNDS = getEnvInt("AGENT_MAX_ROUNDS", 5)
-const LOCKED_PREVIEW_CHARS = 300
+const SESSION_COMPACT_TRIGGER_CHARS = sessionStore.COMPACT_TRIGGER_CHARS
 const BASE_SYSTEM_PROMPT = buildSystemPrompt(
   process.env.PROJECT_ROOT,
   MAX_ROUNDS,
@@ -38,12 +40,16 @@ async function handle(chatId, text, sender, userId) {
     `${timestamp()} ${chalk.bgBlue.white(" AGENT ")} ${chalk.cyan(text.slice(0, 60))} ${chalk.dim(`@${sender}`)}`,
   )
 
-  sessionStore.appendHistory(chatId, "user", text)
-
   const stopTyping = startTyping(chatId)
   try {
+    await archiveExpiredSession(chatId, {
+      userId,
+      onProgress: (event) => sendArchiveProgress(chatId, event, { phase: "ttl" }),
+    })
+    sessionStore.appendHistory(chatId, "user", text)
+
     const availableSkills = skills.load()
-    const session = sessionStore.loadSession(chatId)
+    const session = await loadSessionForPrompt(chatId)
     const systemPrompt =
       BASE_SYSTEM_PROMPT + skills.indexText() + renderSessionPrompt(session)
     const tools = [
@@ -297,9 +303,44 @@ async function handleEndSession({ chatId, call, round, messages }) {
   )
   logOp("tool.call", { name: "end_session", round })
 
-  const { ok, body } = endSession.run(chatId)
+  const { ok, body } = await endSession.run(chatId, {
+    onProgress: (event) =>
+      sendArchiveProgress(chatId, event, { phase: "end_session", round }),
+  })
   logOp("tool.result", { name: "end_session", ok, round })
   messages.push({ role: "tool", tool_call_id: call.id, content: body })
+}
+
+async function sendArchiveProgress(chatId, event, { phase, round } = {}) {
+  const text = formatArchiveProgress(event)
+  if (!text) return
+  await sendMessage(chatId, text)
+  logOp("bot.reply", {
+    chatId,
+    text,
+    phase: `memory.archive.${phase || event.stage}`,
+    round,
+  })
+}
+
+function formatArchiveProgress(event) {
+  if (event.stage === "ttl_detected") {
+    return "🗂️ 先前 session 已過期，正在整理成記憶摘要。"
+  }
+  if (event.stage === "summarizing") {
+    const size = event.rawChars ? `（約 ${event.rawChars} 字，${event.historyCount || 0} 則對話）` : ""
+    return `🧠 正在請 LLM 摘要目前 session ${size}。`
+  }
+  if (event.stage === "writing") {
+    return "💾 摘要完成，正在寫入記憶歷史。"
+  }
+  if (event.stage === "done") {
+    return `✅ 記憶已歸檔 #${event.id}。`
+  }
+  if (event.stage === "failed") {
+    return `⚠️ 記憶歸檔失敗，已保留原 session。\n原因：${event.reason || "未知原因"}`
+  }
+  return ""
 }
 
 async function handleExecShell({
@@ -462,53 +503,54 @@ async function forceFinalSummary({ chatId, messages, tools }) {
   if (content) sessionStore.appendHistory(chatId, "assistant", content)
 }
 
+async function loadSessionForPrompt(chatId) {
+  const session = sessionStore.loadSession(chatId)
+  const prompt = renderSessionPrompt(session)
+  if (!session || prompt.length <= SESSION_COMPACT_TRIGGER_CHARS) return session
+
+  logOp("session.compact.start", {
+    chatId,
+    promptChars: prompt.length,
+    triggerChars: SESSION_COMPACT_TRIGGER_CHARS,
+  })
+  console.log(
+    `${timestamp()} ${chalk.bgBlue.white(" MEM ")} ${chalk.blue(`compact ${prompt.length}/${SESSION_COMPACT_TRIGGER_CHARS}`)}`,
+  )
+
+  const reply = await llm.chat({
+    messages: [
+      {
+        role: "system",
+        content:
+          "你負責壓縮 Telegram agent 的短期記憶。請保留可延續任務所需的事實、用戶意圖、已確認內容、目前進度、待辦與限制。刪除寒暄、重複語句與中間失敗嘗試。只輸出繁體中文摘要，不要使用 Markdown 標題。",
+      },
+      {
+        role: "user",
+        content: `請將以下 session 壓縮成可放入 locked.summary 的摘要，控制在 1200 字內：\n${JSON.stringify(session, null, 2)}`,
+      },
+    ],
+  })
+
+  const summary = (reply.content || "").trim()
+  if (!summary) {
+    throw new Error("記憶壓縮失敗：LLM 沒有回傳摘要")
+  }
+
+  const compacted = sessionStore.compactSession(chatId, summary)
+  logOp("session.compact.done", {
+    chatId,
+    promptChars: prompt.length,
+    summaryChars: summary.length,
+  })
+  return compacted
+}
+
 function safeParse(s) {
   try {
     return JSON.parse(s || "{}")
   } catch {
     return {}
   }
-}
-
-function renderSessionPrompt(session) {
-  if (!session) return ""
-  const lines = ["\n\n[對話狀態]"]
-  if (session.activeSkill)
-    lines.push(`當前進行中的 skill: ${session.activeSkill}`)
-
-  const locked = session.locked || {}
-  const { summary, ...otherLocked } = locked
-
-  if (summary) {
-    lines.push(`任務摘要 (summary): ${summary}`)
-  }
-
-  const lockedKeys = Object.keys(otherLocked)
-  if (lockedKeys.length > 0) {
-    lines.push("已鎖定欄位 (locked):")
-    for (const k of lockedKeys) {
-      const v = otherLocked[k]
-      const preview =
-        typeof v === "string"
-          ? v.length > LOCKED_PREVIEW_CHARS
-            ? `${v.slice(0, LOCKED_PREVIEW_CHARS)}…`
-            : v
-          : JSON.stringify(v)
-      lines.push(`  ${k}: ${preview}`)
-    }
-  }
-
-  if ((session.history || []).length > 0) {
-    lines.push(
-      summary ? "最近原始對話 (補充參考，舊→新):" : "最近對話 (舊→新):",
-    )
-    for (const h of session.history) lines.push(`  ${h.role}: ${h.content}`)
-  }
-
-  lines.push(
-    "若以上區塊存在，優先把用戶訊息理解為對該狀態的延續回應；任務完成或用戶明確取消時呼叫 end_session。",
-  )
-  return lines.join("\n")
 }
 
 module.exports = { handle }

@@ -14,18 +14,20 @@
 
 ## 流程
 
-1. 入口 `appendHistory(chatId, 'user', text)` → `loadSession`（過期懶清）。
-2. 組 `messages = [system, user]`。system prompt 含三段：基礎指引 + skills 索引（`skills/` 非空時）+ `[對話狀態]` 區塊（session 存在時，含 `activeSkill` / `locked` / 最近 history）。
+1. 入口先檢查 TTL；過期 session 呼叫 LLM 摘要並歸檔到 SQLite，再建立新 session。
+2. `appendHistory(chatId, 'user', text)`。
+3. `loadSessionForPrompt` 讀 session；若 `[對話狀態]` 超過 `SESSION_COMPACT_TRIGGER_CHARS`，先呼叫 LLM 壓縮成 `locked.summary`、清空 `history`，再繼續。
+4. 組 `messages = [system, user]`。system prompt 含三段：基礎指引 + skills 索引（`skills/` 非空時）+ `[對話狀態]` 區塊（session 存在時，含 `activeSkill` / `locked` / history）。
    system prompt 明確標示本專案是 Node.js/CommonJS，查核心邏輯優先看 `server.js`、`package.json`、`src/**/*.js`、`docs/summary.md`。
    回覆含程式碼時要求使用 Markdown fenced code block 並標註語言，Telegram finalize 會轉成 HTML code block。
-3. `tools` 預設含 `exec_shell`、`write_file`、`read_file`、`web_fetch`、`remember`、`end_session`；`skills/` 非空再加 `read_skill`。
-4. Loop（上限 `AGENT_MAX_ROUNDS`，預設 `5`）：
+5. `tools` 預設含 `exec_shell`、`write_file`、`read_file`、`web_fetch`、`remember`、`end_session`；`skills/` 非空再加 `read_skill`。
+6. Loop（上限 `AGENT_MAX_ROUNDS`，預設 `5`）：
    - 呼叫 LLM，`reply` 推入 messages
    - `reply.content` 不空 → 發給使用者（`💬 <content>` 或純文字）並 `appendHistory('assistant', content)`
    - `tool_calls` 為空 → 結束
    - 依工具類別處理（讀取類推 messages 繼續；`exec_shell` 預設推回 messages 續跑；`final:true` 成功且可終止時才發完整結果並結束）
    - `read_skill` 成功 → 自動 `markActiveSkill`
-5. 撞上限：**保底總結**——推一則 system 訊息禁止再呼叫工具、用 `tool_choice: 'none'` 再 call 一次 LLM，讓它用現有資料產出文字回覆；回覆前綴 `⚠️ 已達互動上限...`，並 append 到 history。
+7. 撞上限：**保底總結**——推一則 system 訊息禁止再呼叫工具、用 `tool_choice: 'none'` 再 call 一次 LLM，讓它用現有資料產出文字回覆；回覆前綴 `⚠️ 已達互動上限...`，並 append 到 history。
 
 ## 使用者可見訊息
 
@@ -48,7 +50,7 @@
 - `web_fetch({ url, render? })`：輸出上限 8000 字元、HTML→markdown。`render` 可為 `auto`（預設）、`static`、`browser`；`auto` 先用 axios 靜態抓取，疑似 SPA 空殼時改用 Playwright Chromium 渲染。靜態 timeout 15 秒，瀏覽器 timeout 20 秒。`src/agent/tools/web_fetch.js`
 - `read_skill({ name })`：讀 `skills/<name>/SKILL.md` body；成功時 server 自動 `markActiveSkill`。`src/agent/tools/read_skill.js`
 - `remember({ fields })`：淺合併寫入 `session.locked`。`src/agent/tools/remember.js`
-- `end_session()`：清除 session；任務完成或用戶取消時呼叫。`src/agent/tools/end_session.js`
+- `end_session()`：先歸檔再清除 session；任務完成或用戶取消時呼叫。`src/agent/tools/end_session.js`
 
 短期記憶底層：`src/utils/session.js`，詳見 [session-memory.md](../memory/session-memory.md)。
 
@@ -56,7 +58,7 @@
 
 ```
 src/agent/
-  index.js              # agent 主 loop + 各 tool handler + renderSessionPrompt
+  index.js              # agent 主 loop + 各 tool handler
   skills.js             # skills loader（啟動時快取）
   tools/
     shell.js            # exec_shell
@@ -65,7 +67,10 @@ src/agent/
     web_fetch.js        # web_fetch
     read_skill.js       # read_skill
     remember.js         # remember（寫入 session.locked）
-    end_session.js      # end_session（清除 session）
+    end_session.js      # end_session（歸檔並清除 session）
+src/utils/session-prompt.js  # session prompt 渲染，agent 與 /memory 共用
+src/utils/session-archive.js # session 歸檔摘要
+src/utils/memory-db.js       # SQLite 記憶歷史
 ```
 
 ## 日誌
