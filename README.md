@@ -33,6 +33,7 @@
 | `/run <指令>` | **直通 Shell**。繞過 AI 直接執行指令。 [詳情](./docs/features/chat/remote-exec.md) |
 | `/memory`     | 查看記憶狀態、過期時間與目前會注入 LLM 的記憶；可清除。 [詳情](./docs/features/memory/session-memory.md) |
 | `/memory history` | 查看已歸檔的 session 摘要，支援詳情與搜尋。 [詳情](./docs/features/memory/session-memory.md) |
+| `/memory help` | 顯示 memory 指令說明。 [詳情](./docs/features/memory/session-memory.md) |
 
 ---
 

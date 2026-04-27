@@ -14,6 +14,13 @@ async function handle(chatId, text, sender, userId) {
     console.log(`${timestamp()} ${chalk.bgBlue.white(' MEM ')} ${chalk.blue(sub || 'show')} ${chalk.dim(`@${sender}`)}`);
     logOp('user.message', { chatId, userId, sender, text, route: 'memory' });
 
+    if (sub === 'help') {
+        const body = formatMemoryHelp();
+        await sendMessage(chatId, body);
+        logOp('bot.reply', { chatId, text: body, route: 'memory', action: 'help' });
+        return;
+    }
+
     if (sub === 'clear' || sub === 'clear --drop') {
         const drop = sub.endsWith('--drop');
         let result = { archived: false, reason: 'drop' };
@@ -53,6 +60,33 @@ async function handle(chatId, text, sender, userId) {
     const body = data ? formatMemoryReport(data) : '🧠 當前沒有 session（或已過期）。';
     await sendMessage(chatId, body);
     logOp('bot.reply', { chatId, text: body, route: 'memory', action: 'show' });
+}
+
+function formatMemoryHelp() {
+    return [
+        '🧠 Memory 指令',
+        '',
+        '/memory',
+        '查看目前 session 狀態、過期時間、壓縮狀態，以及會送進 LLM 的記憶。',
+        '',
+        '/memory clear',
+        '先把目前 session 摘要歸檔到記憶歷史，再清除 session。',
+        '',
+        '/memory clear --drop',
+        '不歸檔，直接丟棄目前 session。',
+        '',
+        '/memory history',
+        '列出最近 10 筆已歸檔記憶摘要。',
+        '',
+        '/memory history <id>',
+        '查看指定歸檔的完整摘要。',
+        '',
+        '/memory history search <關鍵字>',
+        '搜尋已歸檔摘要。',
+        '',
+        '/memory help',
+        '顯示這份指令說明。',
+    ].join('\n');
 }
 
 async function sendMemoryArchiveProgress(chatId, event, action) {
@@ -166,7 +200,7 @@ function formatMemoryReport(data) {
         preview(prompt || '（無）', PREVIEW_CHARS),
         '```',
         '',
-        '指令：/memory clear 可清除目前 session。',
+        '指令：/memory help 查看所有 memory 指令。',
     ].join('\n');
 }
 
