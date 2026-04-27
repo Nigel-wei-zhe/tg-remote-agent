@@ -33,7 +33,7 @@
 ### chat
 - [**輪詢與通訊**](./features/chat/polling.md): Telegram Long Polling 實作細節。
 - [**遠端指令 (Direct)**](./features/chat/remote-exec.md): 繞過 Agent 直接執行的 `/run` 邏輯，支援指定 cwd；寫檔類成功時回傳存放位置。
-- [**UI/UX 呈現**](./features/chat/ui.md): Telegram typing 指示器與伺服器終端機啟動面板。
+- [**UI/UX 呈現**](./features/chat/ui.md): Telegram typing、長訊息切段、程式碼區塊與伺服器終端機啟動面板。
 
 ### system
 - [**部署與環境**](./features/system/deployment.md): 環境變數、全域指令、Playwright Chromium 安裝。
