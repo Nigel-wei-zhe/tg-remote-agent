@@ -8,6 +8,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
 const { logError, logOp } = require('./src/utils/logger');
 const runCmd = require('./src/commands/run');
 const memoryCmd = require('./src/commands/memory');
+const musicCmd = require('./src/commands/music');
 const agent = require('./src/agent');
 
 const APP_NAME = 'LazyHole-Agent';
@@ -46,6 +47,8 @@ async function handleUpdate(update) {
         await runCmd.handle(chatId, text, sender, userId);
     } else if (text === '/memory' || text.startsWith('/memory ')) {
         await memoryCmd.handle(chatId, text, sender, userId);
+    } else if (text === '/music' || text.startsWith('/music ')) {
+        await musicCmd.handle(chatId, text, sender, userId);
     } else {
         await agent.handle(chatId, text, sender, userId);
     }

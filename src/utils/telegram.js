@@ -174,15 +174,42 @@ async function sendMessage(chatId, text) {
     }
 }
 
-function startTyping(chatId) {
+function startChatAction(chatId, action = 'typing') {
     const send = () => axios.post(`${TG_BASE()}/sendChatAction`, {
         chat_id: chatId,
-        action: 'typing'
+        action
     }).catch(() => {});
 
     send();
     const interval = setInterval(send, 4000);
     return () => clearInterval(interval);
+}
+
+function startTyping(chatId) {
+    return startChatAction(chatId, 'typing');
+}
+
+async function sendAudio(chatId, audio, options = {}) {
+    const payload = {
+        chat_id: chatId,
+        audio,
+        caption: options.caption,
+        title: options.title,
+        performer: options.performer,
+    };
+
+    if (Buffer.isBuffer(audio)) {
+        const form = new FormData();
+        form.append('chat_id', String(chatId));
+        form.append('audio', new Blob([audio], { type: options.mimeType || 'audio/mpeg' }), options.filename || 'audio.mp3');
+        if (options.caption) form.append('caption', options.caption);
+        if (options.title) form.append('title', options.title);
+        if (options.performer) form.append('performer', options.performer);
+        await axios.post(`${TG_BASE()}/sendAudio`, form);
+        return;
+    }
+
+    await axios.post(`${TG_BASE()}/sendAudio`, payload);
 }
 
 // 逐字串流：每 700ms 或 finalize 時 edit 一次訊息
@@ -283,4 +310,4 @@ function createStreamer(chatId) {
     };
 }
 
-module.exports = { sendMessage, startTyping, createStreamer };
+module.exports = { sendMessage, sendAudio, startChatAction, startTyping, createStreamer };

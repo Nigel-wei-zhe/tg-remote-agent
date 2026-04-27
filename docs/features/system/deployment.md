@@ -17,6 +17,7 @@
 ## 可選環境變數
 
 - `MINIMAX_MODEL`: MiniMax model id。
+- `MINIMAX_MUSIC_MODEL`: MiniMax music model id，預設 `music-2.6`。
 - `LLM_PROVIDER`: LLM provider（預設 minimax）。
 - `AGENT_MAX_ROUNDS`: 每則使用者訊息最多 LLM/tool 互動輪數，預設 `5`。
 - `MINIMAX_RETRY_MAX_ATTEMPTS` / `MINIMAX_RETRY_BASE_MS` / `MINIMAX_RETRY_MAX_MS`: MiniMax overload/rate-limit 重試參數。

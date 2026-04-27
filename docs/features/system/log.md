@@ -29,6 +29,10 @@ log/
 | `llm.request` | 送出 LLM 請求 | provider, model, stream?, payload（完整 messages/tools/tool_choice/stream） |
 | `llm.retry` | MiniMax 可恢復錯誤退避後重試 | provider, requestName, attempt, nextAttempt, delayMs, reason, statusCode? |
 | `llm.response` | 收到 LLM 回應 | provider, data (完整 response) |
+| `lyrics.request` | 送出 MiniMax lyrics 請求 | provider, mode, promptLength, lyricsLength, hasTitle |
+| `lyrics.response` | 收到 MiniMax lyrics 回應 | provider, songTitle, styleTags, lyricsLength |
+| `music.request` | 送出 MiniMax music 請求 | provider, model, promptLength, lyricsLength, instrumental, lyricsOptimizer, outputFormat, audioSetting |
+| `music.response` | 收到 MiniMax music 回應 | provider, model, traceId, resultType, extraInfo |
 | `tool.call` | Agent 呼叫工具 | name, command?/path?/cwd?/url?/args?/contentLength?/render?, final?, allowFinal?, round |
 | `tool.result` | 工具執行結果 | name, ok, command?/path?/cwd?/url?/skillName?, output?/length?/status?/bytes?/mode?, final?, allowFinal?, round |
 | `tool.unknown` | LLM 要求了未知工具 | name, round |

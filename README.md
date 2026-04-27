@@ -10,6 +10,7 @@
 
 1. **設定環境**：
    參考 `.env.example` 建立並填寫 `.env`（需包含 `TELEGRAM_TOKEN`、`TELEGRAM_ALLOWED_USER_ID` 與 `MINIMAX_API_KEY`）。
+   `/music` 預設使用 `music-2.6`，可用 `MINIMAX_MUSIC_MODEL` 調整。
    可用 `AGENT_MAX_ROUNDS` 調整每則訊息的 Agent 互動輪數（預設 `5`）。
    可用 `SESSION_COMPACT_TRIGGER_CHARS` 調整 session 超限壓縮門檻（預設 `12000`）。
    記憶歷史預設寫入 `~/.lazyhole/memory.sqlite`，可用 `MEMORY_DB_PATH` 調整。
@@ -31,6 +32,7 @@
 | :------------ | :--------------------------------------------------------------------------------- |
 | **自然語言**  | 直接與 Agent 對話，它會自動決定調用工具或回覆文字。                                |
 | `/run <指令>` | **直通 Shell**。繞過 AI 直接執行指令。 [詳情](./docs/features/chat/remote-exec.md) |
+| `/music <描述>` | 先產歌詞再生成 MiniMax `music-2.6` 音樂，回傳歌詞、時長與音檔；支援 `--instrumental`。 [詳情](./docs/features/chat/music.md) |
 | `/memory`     | 查看記憶狀態、過期時間與目前會注入 LLM 的記憶；可清除。 [詳情](./docs/features/memory/session-memory.md) |
 | `/memory history` | 查看已歸檔的 session 摘要，支援詳情與搜尋。 [詳情](./docs/features/memory/session-memory.md) |
 | `/memory help` | 顯示 memory 指令說明。 [詳情](./docs/features/memory/session-memory.md) |
@@ -54,6 +56,7 @@
 server.js              # 入口（Polling、路由）
 src/
   agent/               # Agent 決策中樞與 Tools 定義
+  commands/            # 直通指令（run / memory / music）
   llm/                 # LLM Provider (MiniMax)
   utils/               # 基礎設施（日誌、Telegram、Session）
 skills/                # 自定義 Skill 能力集

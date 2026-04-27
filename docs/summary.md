@@ -6,14 +6,14 @@
 
 ## 技術設計 (Tech Design)
 - **核心理念**: 極簡本地狀態、可歸檔記憶、基於指令執行的 Telegram AI Agent。
-- **關鍵依賴**: MiniMax (chatcompletion_v2)、Telegram Long Polling、Playwright SPA 渲染、axios/turndown 網頁轉文字。
+- **關鍵依賴**: MiniMax (chatcompletion_v2 / lyrics_generation / music_generation)、Telegram Long Polling、Playwright SPA 渲染、axios/turndown 網頁轉文字。
 - **數據流**: Telegram → server.js (路由) → Agent Loop (決策) → Tools (執行) → Telegram。
 
 ## 模組職責 (Module Roles)
 - `src/agent/`: 核心決策邏輯、工具集定義 (`tools/`，含 shell / write_file / read_file / web_fetch / read_skill / remember / end_session)、Skills 載入、System Prompt (`system-prompt.js`)。
 - `src/llm/`: LLM Provider 抽象層，負責請求封裝與錯誤處理。
 - `src/utils/`: 基礎設施，包含 JSONL 日誌 (`logger.js`)、Telegram API 封裝、短期記憶、prompt 呈現與 SQLite 歷史歸檔 (`session.js` / `session-prompt.js` / `session-archive.js` / `memory-db.js`)。
-- `src/commands/`: 非 AI 決策的直通指令 (`/run`、`/memory`)。
+- `src/commands/`: 非 AI 決策的直通指令 (`/run`、`/memory`、`/music`)。
 - `skills/`: 外部注入的靜態能力文件 (`<name>/SKILL.md`)。
 
 ## 功能索引 (L2 Groups / L3 Details)
@@ -33,6 +33,7 @@
 ### chat
 - [**輪詢與通訊**](./features/chat/polling.md): Telegram Long Polling 實作細節。
 - [**遠端指令 (Direct)**](./features/chat/remote-exec.md): 繞過 Agent 直接執行的 `/run` 邏輯，支援指定 cwd；寫檔類成功時回傳存放位置。
+- [**音樂生成指令**](./features/chat/music.md): `/music` 繞過 Agent 呼叫 MiniMax lyrics/music API，回傳歌詞、時長與 Telegram audio。
 - [**UI/UX 呈現**](./features/chat/ui.md): Telegram typing、長訊息切段、程式碼區塊與伺服器終端機啟動面板。
 
 ### system
