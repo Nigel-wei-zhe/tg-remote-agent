@@ -31,6 +31,7 @@
 | 指令          | 說明                                                                               |
 | :------------ | :--------------------------------------------------------------------------------- |
 | **自然語言**  | 直接與 Agent 對話，它會自動決定調用工具或回覆文字。                                |
+| `/help` | 顯示目前所有功能入口。 [詳情](./docs/features/chat/help.md) |
 | `/run <指令>` | **直通 Shell**。繞過 AI 直接執行指令。 [詳情](./docs/features/chat/remote-exec.md) |
 | `/music <描述>` | 先產歌詞再生成 MiniMax `music-2.6` 音樂，回傳歌詞、時長與音檔；支援 `--instrumental`。 [詳情](./docs/features/chat/music.md) |
 | `/memory`     | 查看記憶狀態、過期時間與目前會注入 LLM 的記憶；可清除。 [詳情](./docs/features/memory/session-memory.md) |
@@ -56,7 +57,7 @@
 server.js              # 入口（Polling、路由）
 src/
   agent/               # Agent 決策中樞與 Tools 定義
-  commands/            # 直通指令（run / memory / music）
+  commands/            # 直通指令（help / run / memory / music）
   llm/                 # LLM Provider (MiniMax)
   utils/               # 基礎設施（日誌、Telegram、Session）
 skills/                # 自定義 Skill 能力集

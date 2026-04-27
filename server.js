@@ -9,6 +9,7 @@ const { logError, logOp } = require('./src/utils/logger');
 const runCmd = require('./src/commands/run');
 const memoryCmd = require('./src/commands/memory');
 const musicCmd = require('./src/commands/music');
+const helpCmd = require('./src/commands/help');
 const agent = require('./src/agent');
 
 const APP_NAME = 'LazyHole-Agent';
@@ -43,7 +44,9 @@ async function handleUpdate(update) {
         return;
     }
 
-    if (text.startsWith('/run ')) {
+    if (text === '/help' || text.startsWith('/help ')) {
+        await helpCmd.handle(chatId, text, sender, userId);
+    } else if (text.startsWith('/run ')) {
         await runCmd.handle(chatId, text, sender, userId);
     } else if (text === '/memory' || text.startsWith('/memory ')) {
         await memoryCmd.handle(chatId, text, sender, userId);

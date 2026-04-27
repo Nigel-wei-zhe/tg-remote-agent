@@ -13,7 +13,7 @@
 - `src/agent/`: 核心決策邏輯、工具集定義 (`tools/`，含 shell / write_file / read_file / web_fetch / read_skill / remember / end_session)、Skills 載入、System Prompt (`system-prompt.js`)。
 - `src/llm/`: LLM Provider 抽象層，負責請求封裝與錯誤處理。
 - `src/utils/`: 基礎設施，包含 JSONL 日誌 (`logger.js`)、Telegram API 封裝、短期記憶、prompt 呈現與 SQLite 歷史歸檔 (`session.js` / `session-prompt.js` / `session-archive.js` / `memory-db.js`)。
-- `src/commands/`: 非 AI 決策的直通指令 (`/run`、`/memory`、`/music`)。
+- `src/commands/`: 非 AI 決策的直通指令 (`/help`、`/run`、`/memory`、`/music`)。
 - `skills/`: 外部注入的靜態能力文件 (`<name>/SKILL.md`)。
 
 ## 功能索引 (L2 Groups / L3 Details)
@@ -31,6 +31,7 @@
 - [**記憶系統 (Session + History)**](./features/memory/session-memory.md): 跨輪對話狀態、超限壓縮、SQLite 歷史歸檔、`remember` / `end_session` 工具、`/memory` 指令。
 
 ### chat
+- [**功能總覽指令**](./features/chat/help.md): `/help` 顯示自然語言、`/run`、`/memory`、`/music` 功能入口。
 - [**輪詢與通訊**](./features/chat/polling.md): Telegram Long Polling 實作細節。
 - [**遠端指令 (Direct)**](./features/chat/remote-exec.md): 繞過 Agent 直接執行的 `/run` 邏輯，支援指定 cwd；寫檔類成功時回傳存放位置。
 - [**音樂生成指令**](./features/chat/music.md): `/music` 繞過 Agent 呼叫 MiniMax lyrics/music API，回傳歌詞、時長與 Telegram audio。
